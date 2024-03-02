@@ -291,36 +291,106 @@ function interceptOrNot(e) {
     }
     return -1 != r.indexOf('twitter.com') && (-1 != i.indexOf(window.twitterMessageURI) || -1 != i.indexOf('graphql') && -1 != i.indexOf('CreateTweet') || -1 != o.indexOf(window.twitterPrefetchTimestamp) && -1 == e.tabId) && 'xmlhttprequest' == n ? t = 1 : !r.indexOf('facebook.com') || -1 == i.indexOf('updatestatus') && -1 == i.indexOf('webgraphql') && -1 == i.indexOf('api/graphql') || 'xmlhttprequest' != n ? -1 != r.indexOf('google.co') && -1 != i.indexOf('/plusappui/mutate') && 'xmlhttprequest' == n ? t = 1 : -1 != r.indexOf('google.co') ? (t = 0, 'xmlhttprequest' != n && 'main_frame' != n ? t = 0 : -1 != r.indexOf('accounts.google.co') || -1 != r.indexOf('docs.google.co') || -1 != i.indexOf('/calendar/') || -1 != r.indexOf('code.google.co') || -1 != i.indexOf('/cloudprint') || -1 != i.indexOf('/_/chrome/newtab') || -1 != r.indexOf('appengine.google.com') || -1 != i.indexOf('/complete/search') || -1 != i.indexOf('/webhp') ? t = 0 : -1 != r.indexOf('meet.google.co') ? t = 1 : -1 != i.indexOf('/search') || -1 != i.indexOf('/#q') || -1 != r.indexOf('translate.google.co') || -1 != r.indexOf('remotedesktop.google.co') ? t = 1 : -1 != r.indexOf('mail.google.co') && 'main_frame' == n ? t = 1 : -1 != r.indexOf('drive.google.co') && 'main_frame' == n ? t = 1 : -1 != r.indexOf('sites.google.co') && 'main_frame' == n ? t = 1 : -1 != r.indexOf('hangouts.google.co') && 'main_frame' == n ? t = 1 : -1 != r.indexOf('plus.google.co') && 'main_frame' == n ? t = 1 : 0) : -1 != r.indexOf('youtube.com') && 'main_frame' == n ? t = 1 : -1 != r.indexOf('youtube.com') && 'sub_frame' == n && -1 != i.indexOf('embed') ? t = 1 : -1 == r.indexOf('youtube.com') || -1 == i.indexOf('watch_fragments_ajax') && -1 == i.indexOf('doubleclick/DARTIframe.html') && -1 == i.indexOf('ad_data_204') && -1 == i.indexOf('annotations_invideo') && -1 == i.indexOf('api/stats/atr') && -1 == i.indexOf('get_video_info') ? -1 != i.indexOf('youtubei/v1/search') || -1 != i.indexOf('youtube.com/results') ? 1 : 'main_frame' != n && 'sub_frame' != n || -1 == r.indexOf('youtube.com') ? -1 != r.indexOf('facebook.com') && 'sub_frame' == n ? t = 0 : -1 != r.indexOf('bing.com') && -1 != i.indexOf('/fd/fb') || -1 != r.indexOf('ssl.bing.com') || -1 != i.indexOf('/passport.aspx') ? t = 0 : -1 != r.indexOf('bing.com') && 'sub_frame' === n ? t = 1 : 'main_frame' == n || 'sub_frame' == n && 1 == window.checkiFrames ? t = 1 : t : -1 != i.indexOf('youtubei/v1/search') ? 1 : '/' == i ? 1 : -1 == i.indexOf('/results') && -1 == i.indexOf('/watch') ? 0 : -1 != o.indexOf('pbj=1') ? 0 : t = 1 : t = 0 : t = 1;
 }
-function getBlockUrl(e, t, n, o, r) {
-    var i = 'domainblockedforuser', s = '';
-    'GL' == e && (i = 'GEO');
-    '-1' != n && (i = 'safesearch', s = window.btoa(n));
-    var a = '';
-    if ('BL' != t && 'BL_SRCH' != t && 'WL' != t && 'WL_SRCH' != t || (a = t), 'BL' != t && 'BL_SRCH' != t || (i = 'G' == e ? 'globalblacklist' : 'policyblacklist', t = 'BL'), 'WL' != t && 'WL_SRCH' != t || (i = 'whitelistonly', t = 'WL'), 'BANNED' == t && (i = 'banned'), 'unknown' != window.clusterUrl) {
-        var c = window.atob(o), l = c.substr(c.indexOf('://') + 3);
-        o = window.btoa(l);
-        var d = '';
-        return d = window.clusterUrl.replace('/crextn', '') + '/blocked?useremail=' + window.userEmail + '&reason=' + i + '&categoryid=' + t + '&policyid=' + e + '&keyword=' + s + '&url=' + o + '&ver=' + window.version + (1 == r ? '&subFrame=1' : '') + '&extension_id=' + chrome.runtime.id, window.geoLat && window.geoLng && (d += '&lat=' + window.geoLat + '&lng=' + window.geoLng), a && (d += '&listType=' + a), d;
+function getBlockUrl(policyId, categoryId, reasonCode, keyword, isSubFrame) {
+    var reason = 'domainblockedforuser';
+    var encodedKeyword = '';
+
+    if (reasonCode === 'GL') {
+        reason = 'GEO';
+    }
+
+    if (categoryId !== '-1') {
+        reason = 'safesearch';
+        encodedKeyword = window.btoa(keyword);
+    }
+
+    var listType = '';
+    if (['BL', 'BL_SRCH', 'WL', 'WL_SRCH'].includes(categoryId)) {
+        listType = categoryId;
+    }
+
+    if (categoryId !== 'BL' && categoryId !== 'BL_SRCH') {
+        if (categoryId === 'BANNED') {
+            reason = 'banned';
+        }
+        if (categoryId !== 'WL' && categoryId !== 'WL_SRCH') {
+            reason = 'whitelistonly';
+            listType = 'WL';
+        }
+    }
+
+    if (window.clusterUrl !== 'unknown') {
+        var decodedUrl = window.atob(policyId);
+        var domain = decodedUrl.substr(decodedUrl.indexOf('://') + 3);
+        var encodedUrl = window.btoa(domain);
+
+        var blockUrl = window.clusterUrl.replace('/crextn', '') + '/blocked?useremail=' + window.userEmail + '&reason=' + reason + '&categoryid=' + categoryId + '&policyid=' + policyId + '&keyword=' + encodedKeyword + '&url=' + encodedUrl + '&ver=' + window.version + (isSubFrame === 1 ? '&subFrame=1' : '') + '&extension_id=' + chrome.runtime.id;
+
+        if (window.geoLat && window.geoLng) {
+            blockUrl += '&lat=' + window.geoLat + '&lng=' + window.geoLng;
+        }
+
+        if (listType) {
+            blockUrl += '&listType=' + listType;
+        }
+
+        return blockUrl;
     }
 }
-function takeDenyActionTabs(e, t, n, o, r, i, s) {
-    invalidateSkipListCaching(o, false);
-    clearWebCache(o);
+
+function takeDenyActionTabs(domainId, policyId, categoryId, reasonCode, tabId, isSubFrame, reBroker) {
+    invalidateSkipListCaching(domainId, false);
+    clearWebCache(domainId);
     window.brokredRequest = [];
-    var a = 'domainblockedforuser', c = '';
-    'GL' == e && (a = 'GEO');
-    '-1' != n && (a = 'safesearch', c = window.btoa(n));
-    var l = '';
-    if ('BL' != t && 'BL_SRCH' != t && 'WL' != t && 'WL_SRCH' != t || (l = t), 'BL' != t && 'BL_SRCH' != t || (a = 'G' == e ? 'globalblacklist' : 'policyblacklist', t = 'BL'), 'BANNED' == t && (a = 'banned'), 'WL' != t && 'WL_SRCH' != t || (a = 'whitelistonly', t = 'WL'), 'unknown' != window.clusterUrl) {
-        var d = window.atob(o), u = d.substr(d.indexOf('://') + 3);
-        o = window.btoa(u);
-        var h = window.clusterUrl.replace('/crextn', ''), f = window.userEmail, w = '';
-        return w = h + '/blocked?useremail=' + f + '&reason=' + a + '&categoryid=' + t + '&policyid=' + e + '&keyword=' + c + '&url=' + o + '&ver=' + window.version + (1 == i ? '&subFrame=1' : '') + '&extension_id=' + chrome.runtime.id, window.geoLat && window.geoLng && (w += '&lat=' + window.geoLat + '&lng=' + window.geoLng), l && (w += '&listType=' + l), void 0 !== s && s && (w += '&rebroker=1'), void isBlockingInProgress(r, 'http://' + window.atob(o)).then(function (e) {
-            e || setBlockedPage(r, w);
-        }).catch(function (e) {
-            console.log('exception in checking blocking progress', r);
-            setBlockedPage(r, w);
-        });
+
+    var reason = 'domainblockedforuser';
+    var keyword = '';
+    if (reasonCode === 'GL') {
+        reason = 'GEO';
+    }
+    if (categoryId !== '-1') {
+        reason = 'safesearch';
+        keyword = window.btoa(categoryId);
+    }
+    var listType = '';
+    if (['BL', 'BL_SRCH', 'WL', 'WL_SRCH'].includes(categoryId)) {
+        listType = categoryId;
+    }
+    if (categoryId !== 'BL' && categoryId !== 'BL_SRCH') {
+        if (categoryId === 'BANNED') {
+            reason = 'banned';
+        }
+        if (categoryId !== 'WL' && categoryId !== 'WL_SRCH') {
+            reason = 'whitelistonly';
+            listType = 'WL';
+        }
+    }
+    if (window.clusterUrl !== 'unknown') {
+        var decodedDomain = window.atob(domainId);
+        var domain = decodedDomain.substr(decodedDomain.indexOf('://') + 3);
+        domainId = window.btoa(domain);
+        var clusterUrl = window.clusterUrl.replace('/crextn', '');
+        var userEmail = window.userEmail;
+        var url = clusterUrl + '/blocked?useremail=' + userEmail + '&reason=' + reason + '&categoryid=' + categoryId + '&policyid=' + policyId + '&keyword=' + keyword + '&url=' + domainId + '&ver=' + window.version + (isSubFrame === 1 ? '&subFrame=1' : '') + '&extension_id=' + chrome.runtime.id;
+        if (window.geoLat && window.geoLng) {
+            url += '&lat=' + window.geoLat + '&lng=' + window.geoLng;
+        }
+        if (listType) {
+            url += '&listType=' + listType;
+        }
+        if (reBroker !== undefined && reBroker) {
+            url += '&rebroker=1';
+        }
+        isBlockingInProgress(tabId, 'http://' + window.atob(domainId))
+            .then(function (isBlocking) {
+                if (!isBlocking) {
+                    setBlockedPage(tabId, url);
+                }
+            })
+            .catch(function (error) {
+                console.log('Exception in checking blocking progress:', error);
+                setBlockedPage(tabId, url);
+            });
     }
 }
 function createBlockingRequest(e, t) {
@@ -397,150 +467,174 @@ function fetchUserAPI() {
 function skipCacheAndLogAlways(e, t) {
     return -1 != e.indexOf('twitter.com') ? 1 : -1 != e.indexOf('facebook.com') ? 1 : -1 != e.indexOf('google.co') && -1 == e.indexOf('mail.google.co') && -1 == e.indexOf('drive.google.co') ? 1 : -1 != e.indexOf('bing.co') ? 1 : -1 != e.indexOf('search.yahoo.co') ? 1 : -1 != e.indexOf('wikipedia.org') ? 1 : -1 != e.indexOf('youtube.co') ? 1 : 0;
 }
-function isBlockingInProgress(e, t) {
-    return new Promise(function (n, o) {
-        chrome.tabs.get(e, function (e) {
-            if (e && 'loading' == e.status) {
-                if (urlDetails = new URL(t), 'securly.com' == urlDetails.hostname.replace(/^[^.]+\./g, '') && ('blocked' == urlDetails.pathname || 'blocked.php' == urlDetails.pathname) || 'iheobagjkfklnlikgihanlhcddjoihkg' == urlDetails.hostname && 'blocked.html' == urlDetails.pathname) {
-                    return void n(true);
+function isBlockingInProgress(tabId, url) {
+    return new Promise(function (resolve, reject) {
+        chrome.tabs.get(tabId, function (tab) {
+            if (tab && tab.status === 'loading') {
+                var urlDetails = new URL(url);
+                if ((urlDetails.hostname.endsWith('.securly.com') && (urlDetails.pathname === 'blocked' || urlDetails.pathname === 'blocked.php')) || (urlDetails.hostname === 'iheobagjkfklnlikgihanlhcddjoihkg' && urlDetails.pathname === 'blocked.html')) {
+                    resolve(true);
                 }
-                if (void 0 !== e.pendingUrl && (urlDetails = new URL(e.pendingUrl), 'securly.com' == urlDetails.hostname.replace(/^[^.]+\./g, '') && ('blocked' == urlDetails.pathname || 'blocked.php' == urlDetails.pathname) || 'iheobagjkfklnlikgihanlhcddjoihkg' == urlDetails.hostname && 'blocked.html' == urlDetails.pathname)) {
-                    return void n(true);
+                if (tab.pendingUrl !== undefined) {
+                    urlDetails = new URL(tab.pendingUrl);
+                    if ((urlDetails.hostname.endsWith('.securly.com') && (urlDetails.pathname === 'blocked' || urlDetails.pathname === 'blocked.php')) || (urlDetails.hostname === 'iheobagjkfklnlikgihanlhcddjoihkg' && urlDetails.pathname === 'blocked.html')) {
+                        resolve(true);
+                    }
                 }
             }
-            n(false);
+            resolve(false);
         });
     });
 }
-function setBlockedPage(e, t) {
-    -1 == e && (e = null);
-    e > 0 && (window.tabsBeingBlocked[e] = t, chrome.tabs.get(e, t => {
-        0 != t.url.indexOf('chrome') && -1 == t.url.indexOf('securly.com/') && chrome.tabs.executeScript(e, {
-            allFrames: true,
-            code: 'window.stop(); window.location = \'\';',
-            runAt: 'document_start'
-        }, function () {
+function setBlockedPage(tabId, blockedUrl) {
+    if (tabId === -1) {
+        tabId = null;
+    }
+    if (tabId > 0) {
+        window.tabsBeingBlocked[tabId] = blockedUrl;
+        chrome.tabs.get(tabId, function (tab) {
+            if (tab.url.indexOf('chrome') !== 0 && tab.url.indexOf('securly.com/') === -1) {
+                chrome.tabs.executeScript(tabId, {
+                    allFrames: true,
+                    code: 'window.stop(); window.location = \'\';',
+                    runAt: 'document_start'
+                });
+            }
         });
-    }));
-    chrome.tabs.update(e, { url: 'chrome-extension://iheobagjkfklnlikgihanlhcddjoihkg/blocked.html' }, function () {
-        chrome.runtime.lastError;
-    });
-    chrome.tabs.update(e, { url: t }, function () {
-        chrome.runtime.lastError && (console.log('some error while redirecting to blocked page', chrome.runtime.lastError), setTimeout(function () {
-            chrome.tabs.update(null, { url: t }, function () {
-            });
-        }, 500));
+    }
+    chrome.tabs.update(tabId, { url: 'chrome-extension://iheobagjkfklnlikgihanlhcddjoihkg/blocked.html' });
+    chrome.tabs.update(tabId, { url: blockedUrl }, function () {
+        if (chrome.runtime.lastError) {
+            console.log('Some error occurred while redirecting to blocked page:', chrome.runtime.lastError);
+            setTimeout(function () {
+                chrome.tabs.update(null, { url: blockedUrl });
+            }, 500);
+        }
     });
 }
-function getYtSSRequestHeaders(e, t) {
-    if (-1 != e.indexOf('/results') || -1 != e.indexOf('/search') || -1 != e.indexOf('/watch')) {
-        for (var n = '', o = 0; o < t.length; ++o) {
-            if ('Cookie' === t[o].name) {
-                n = t[o].value;
-                t.splice(o, 1);
+
+function getYtSSRequestHeaders(url, headers) {
+    if (url.includes('/results') || url.includes('/search') || url.includes('/watch')) {
+        var cookies = '';
+        for (var i = 0; i < headers.length; ++i) {
+            if (headers[i].name === 'Cookie') {
+                cookies = headers[i].value;
+                headers.splice(i, 1);
                 break;
             }
         }
-        if ('' == n) {
-            t.push({
+        if (cookies === '') {
+            headers.push({
                 name: 'Cookie',
                 value: 'PREF=f2=8000000'
             });
         } else {
-            var r = 0, i = n.split('; ');
-            for (o = 0; o < i.length; ++o) {
-                -1 != i[o].indexOf('PREF') && (-1 == i[o].indexOf('f2=8000000') && (i[o] += '&f2=8000000'), r = 1);
-                -1 != i[o].indexOf('SID=') && (i[o] = '');
+            var prefIndex = cookies.indexOf('PREF');
+            if (prefIndex === -1) {
+                headers.push({
+                    name: 'Cookie',
+                    value: cookies + '; PREF=f2=8000000'
+                });
+            } else {
+                var prefValueIndex = cookies.indexOf('8000000', prefIndex);
+                if (prefValueIndex === -1) {
+                    cookies += '&f2=8000000';
+                }
+                headers.push({
+                    name: 'Cookie',
+                    value: cookies
+                });
             }
-            0 == r && i.push('PREF=f2=8000000');
-            var s = '';
-            for (o = 0; o < i.length; ++o) {
-                s += i[o];
-                s += '; ';
-            }
-            s = s.substring(0, s.length - 2);
-            t.push({
-                name: 'Cookie',
-                value: s
-            });
         }
     }
-    return t;
+    return headers;
 }
-function getPauseAction(e) {
-    return invalidateSkipListCaching(e, true), clearWebCache(e), window.brokredRequest = [], 'unknown' == window.clusterUrl ? { cancel: true } : { redirectUrl: window.clusterUrl.replace('/crextn', '') + '/paused' };
+
+function getPauseAction(url) {
+    invalidateSkipListCaching(url, true);
+    clearWebCache(url);
+    window.brokredRequest = [];
+    if (window.clusterUrl === 'unknown') {
+        return { cancel: true };
+    } else {
+        return { redirectUrl: window.clusterUrl.replace('/crextn', '') + '/paused' };
+    }
 }
-function takePauseActionTabs(e, t) {
-    var n = getPauseAction(e);
-    if (void 0 !== n.redirectUrl) {
-        var o = n.redirectUrl;
-        chrome.tabs.update(t, { url: 'chrome-extension://iheobagjkfklnlikgihanlhcddjoihkg/blocked.html' }, r);
-        chrome.tabs.update(t, { url: o }, r);
+
+function takePauseActionTabs(url, tabId) {
+    var action = getPauseAction(url);
+    if (action.redirectUrl !== undefined) {
+        var redirectUrl = action.redirectUrl;
+        chrome.tabs.update(tabId, { url: 'chrome-extension://iheobagjkfklnlikgihanlhcddjoihkg/blocked.html' });
+        chrome.tabs.update(tabId, { url: redirectUrl }, function () {
+            if (chrome.runtime.lastError) {
+                console.error('Error updating tab:', chrome.runtime.lastError);
+            }
+        });
         setTimeout(function () {
-            chrome.tabs.update(null, { url: o }, r);
+            chrome.tabs.update(null, { url: redirectUrl });
         }, 500);
     }
-    function r() {
-        chrome.runtime.lastError;
-    }
 }
-function takeToFailedOpenBlockedPage(e, t, n) {
-    var o = btoa(t);
-    r = [];
-    0 != (Math.pow(2, 3) & n) && r.push('Pornography');
-    0 != (Math.pow(2, 4) & n) && r.push('Drugs');
-    0 != (Math.pow(2, 5) & n) && r.push('Gambling');
-    var r = btoa(r.join(', '));
+
+function takeToFailedOpenBlockedPage(tabId, siteUrl, categoryFlags) {
+    var encodedSiteUrl = btoa(siteUrl);
+    var categories = [];
+    if (categoryFlags & Math.pow(2, 3)) categories.push('Pornography');
+    if (categoryFlags & Math.pow(2, 4)) categories.push('Drugs');
+    if (categoryFlags & Math.pow(2, 5)) categories.push('Gambling');
+    var encodedCategories = btoa(categories.join(', '));
     window.brokredRequest = [];
-    chrome.tabs.update(e, { url: 'chrome-extension://iheobagjkfklnlikgihanlhcddjoihkg/blocked.html?site=' + o + '&category=' + r }, function () {
-        chrome.runtime.lastError;
+    chrome.tabs.update(tabId, { url: 'chrome-extension://iheobagjkfklnlikgihanlhcddjoihkg/blocked.html?site=' + encodedSiteUrl + '&category=' + encodedCategories }, function () {
+        if (chrome.runtime.lastError) {
+            console.error('Error updating tab:', chrome.runtime.lastError);
+        }
     });
 }
-function checkSkipListCaching(e) {
-    var t = '', n = document.createElement('a');
-    n.href = e.url;
-    var o = cleanURL(n.hostname.toLowerCase()), r = Math.floor(Date.now() / 1000), i = Object.keys(window.skipList);
-    if (i && -1 != i.indexOf(o)) {
-        if (t = o, ttlForDomain = window.skipList[o].ttl, lastBrokerCall = window.skipList[o].last_broker_call, -1 == ttlForDomain) {
-            return 0;
+
+function checkSkipListCaching(url) {
+    var hostname = new URL(url).hostname.toLowerCase();
+    var currentTime = Math.floor(Date.now() / 1000);
+    var keys = Object.keys(window.skipList);
+    var found = keys.find(function (key) {
+        if (key === hostname) {
+            var ttl = window.skipList[key].ttl;
+            var lastBrokerCall = window.skipList[key].last_broker_call;
+            return ttl === -1 || (currentTime - lastBrokerCall) >= ttl;
+        } else if (key.includes('*')) {
+            var regex = new RegExp(window.skipList[key].regx);
+            return regex.test(hostname);
         }
-        if (r - lastBrokerCall < ttlForDomain) {
-            return 0;
-        }
+        return false;
+    });
+    if (found) {
+        window.skipList[found].last_broker_call = currentTime;
+        return true;
     }
-    for (var s = 0; s < i.length; s++) {
-        if (-1 != i[s].indexOf('*')) {
-            if (window.skipList[i[s]].regx.test(cleanURL(e.url))) {
-                if (t = i[s], ttlForDomain = window.skipList[i[s]].ttl, lastBrokerCall = window.skipList[i[s]].last_broker_call, -1 == ttlForDomain) {
-                    return 0;
-                }
-                if (r - lastBrokerCall < ttlForDomain) {
-                    return 0;
-                }
-            }
-        }
-    }
-    return t.length > 0 && (window.skipList[t].last_broker_call = r), 1;
+    return false;
 }
-function invalidateSkipListCaching(e, t) {
-    url = window.atob(e);
-    var n = Object.keys(window.skipList);
-    if (t) {
-        for (var o = 0; o < n.length; o++) {
-            window.skipList[n[o]].last_broker_call = 0;
-        }
+
+function invalidateSkipListCaching(url, resetAll) {
+    var hostname = new URL(window.atob(url)).hostname.toLowerCase();
+    if (resetAll) {
+        Object.keys(window.skipList).forEach(function (key) {
+            window.skipList[key].last_broker_call = 0;
+        });
     } else {
-        var r = document.createElement('a');
-        r.href = url;
-        var i = cleanURL(r.hostname.toLowerCase());
-        n && -1 != n.indexOf(i) && (window.skipList[i].last_broker_call = 0);
-        for (o = 0; o < n.length; o++) {
-            if (-1 != n[o].indexOf('*')) {
-                window.skipList[n[o]].regx.test(cleanURL(url)) && (window.skipList[n[o]].last_broker_call = 0);
+        var keys = Object.keys(window.skipList);
+        keys.forEach(function (key) {
+            if (key === hostname) {
+                window.skipList[key].last_broker_call = 0;
+            } else if (key.includes('*')) {
+                var regex = new RegExp(window.skipList[key].regx);
+                if (regex.test(hostname)) {
+                    window.skipList[key].last_broker_call = 0;
+                }
             }
-        }
+        });
     }
 }
+
 function isClusterURLAvailable() {
     return window.userEmail && 'UNKNOWN_SCHOOL' !== window.clusterUrl && 'AVOID_OS' !== window.clusterUrl && 'unknown' !== window.clusterUrl;
 }
@@ -581,82 +675,111 @@ function getGeolocation() {
     });
 }
 function getRemoteIPGeo() {
-    if ('unknown' != window.clusterUrl && 'AVOID_OS' != window.clusterUrl && 'UNKNOWN_SCHOOL' != window.clusterUrl) {
-        var e = createBlockingRequest('get', window.clusterUrl + '/getGeoStatus?ip=1');
-        e.onload = function () {
-            e.responseText.trim() != window.geoLastIP && (getGeolocation(), window.geoLastIP = e.responseText.trim());
+    if (window.clusterUrl !== 'unknown' && window.clusterUrl !== 'AVOID_OS' && window.clusterUrl !== 'UNKNOWN_SCHOOL') {
+        var request = createBlockingRequest('GET', window.clusterUrl + '/getGeoStatus?ip=1');
+        request.onload = function () {
+            var responseText = request.responseText.trim();
+            if (responseText !== window.geoLastIP) {
+                getGeolocation();
+                window.geoLastIP = responseText;
+            }
         };
         try {
-            e.send();
-        } catch (e) {
+            request.send();
+        } catch (error) {
             console.log('Geolocation remote IP request error.');
         }
     }
 }
-function getVersion(e) {
-    var t = createBlockingRequest('GET', 'manifest.json');
-    t.onload = function (e) {
-        var n = JSON.parse(t.responseText);
-        window.version = n.version;
+
+function getVersion() {
+    var request = createBlockingRequest('GET', 'manifest.json');
+    request.onload = function () {
+        var manifest = JSON.parse(request.responseText);
+        window.version = manifest.version;
     };
     try {
-        t.send();
-    } catch (e) {
+        request.send();
+    } catch (error) {
         console.log('Send error u2');
     }
 }
-function getQueryVariable(e, t) {
-    var n = document.createElement('a');
-    n.href = e;
-    for (var o = n.search.replace(/\?/, '').split('&'), r = 0; r < o.length; r++) {
-        var i = o[r].split('=');
-        if (decodeURIComponent(i[0]) == t) {
-            return decodeURIComponent(i[1]);
+
+function getQueryVariable(url, variable) {
+    var parser = document.createElement('a');
+    parser.href = url;
+    var query = parser.search.replace(/\?/, '').split('&');
+    for (var i = 0; i < query.length; i++) {
+        var pair = query[i].split('=');
+        if (decodeURIComponent(pair[0]) === variable) {
+            return decodeURIComponent(pair[1]);
         }
     }
     return '';
 }
-function normalizeHostname(e) {
-    var t = e;
-    return 0 == e.indexOf('www.') ? t = e.substr(4) : 0 == e.indexOf('m.') && (t = e.substr(2)), t;
-}
-function extractTranslateHostname(e) {
-    var t = 'translate.google.com', n = getQueryVariable(e, 'u');
-    if ('' != n) {
-        var o = (n = (n = (n = (n = decodeURIComponent(n)).toLowerCase()).replace('http://', '')).replace('https://', '')).indexOf('/');
-        t = -1 != o ? n.substr(0, o) : n;
+
+function normalizeHostname(hostname) {
+    var normalized = hostname;
+    if (hostname.startsWith('www.')) {
+        normalized = hostname.substr(4);
+    } else if (hostname.startsWith('m.')) {
+        normalized = hostname.substr(2);
     }
-    return t;
+    return normalized;
 }
-function sendDebugInfo(e) {
-    var t = window.clusterUrl + '/debug', n = new XMLHttpRequest();
-    n.open('POST', t);
-    n.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+
+function extractTranslateHostname(url) {
+    var translateHostname = 'translate.google.com';
+    var query = getQueryVariable(url, 'u');
+    if (query !== '') {
+        var decodedQuery = decodeURIComponent(query).toLowerCase().replace('http://', '').replace('https://', '');
+        var slashIndex = decodedQuery.indexOf('/');
+        translateHostname = slashIndex !== -1 ? decodedQuery.substr(0, slashIndex) : decodedQuery;
+    }
+    return translateHostname;
+}
+
+function sendDebugInfo(data) {
+    var url = window.clusterUrl + '/debug';
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
     try {
-        n.send(JSON.stringify(e));
-    } catch (e) {
+        xhr.send(JSON.stringify(data));
+    } catch (error) {
         console.log('Send error u3');
     }
 }
+
 function checkAllLoadedTabs() {
     window.needToReloadTabs = 0;
-    chrome.tabs.query({}, function (e) {
-        for (var t = 0; t < e.length; t++) {
-            -1 == e[t].url.indexOf('securly.com') && (-1 == e[t].url.indexOf('http://') && -1 == e[t].url.indexOf('https://') || chrome.tabs.reload(e[t].id));
-        }
+    chrome.tabs.query({}, function (tabs) {
+        tabs.forEach(function (tab) {
+            if (tab.url.indexOf('securly.com') === -1 && (tab.url.startsWith('http://') || tab.url.startsWith('https://'))) {
+                chrome.tabs.reload(tab.id);
+            }
+        });
     });
 }
-function clearWebCache(e) {
-    var t = new Date().getTime() - 300000;
-    chrome.browsingData.removeCache({ since: t }, function () {
-        chrome.runtime.lastError;
-    });
+
+function clearWebCache(base64Url) {
     try {
-        var n = window.atob(e), o = new URL(n).hostname.replace('www.', '');
+        var decodedUrl = window.atob(base64Url);
+        var hostname = new URL(decodedUrl).hostname.replace('www.', '');
+
+        var currentTime = new Date().getTime();
+        var fiveMinutesAgo = currentTime - 300000;
+
+        chrome.browsingData.removeCache({ since: fiveMinutesAgo }, function () {
+            if (chrome.runtime.lastError) {
+                console.log('Error clearing cache:', chrome.runtime.lastError.message);
+            }
+        });
+
         chrome.browsingData.remove({
             origins: [
-                'https://' + o,
-                'https://www.' + o
+                'https://' + hostname,
+                'https://www.' + hostname
             ]
         }, {
             cacheStorage: true,
@@ -667,11 +790,15 @@ function clearWebCache(e) {
             serviceWorkers: true,
             webSQL: true
         }, function () {
+            if (chrome.runtime.lastError) {
+                console.log('Error clearing browsing data:', chrome.runtime.lastError.message);
+            }
         });
-    } catch (t) {
-        console.log('Clearing web cache failed. b64Url' + e);
+    } catch (error) {
+        console.log('Clearing web cache failed. Base64 URL:', base64Url);
     }
 }
+
 function getDebugInfo() {
     var e = {
         clusterUrl: window.clusterUrl,
@@ -1015,63 +1142,71 @@ function latencyCheck() {
 }
 
 function downloadConfig() {
-    var request = createNonBlockingRequest('get', 'http://cdn1.securly.com/config.json');
+    var request = createNonBlockingRequest('GET', 'http://cdn1.securly.com/config.json');
 
     request.onreadystatechange = function () {
-        if (200 == request.status && 4 == request.readyState) {
-            if (0 == request.responseText.trim().length) {
-                return void (window.skipList = []);
+        if (request.readyState === XMLHttpRequest.DONE) {
+            if (request.status === 200) {
+                var responseText = request.responseText.trim();
+                if (responseText.length === 0) {
+                    window.skipList = [];
+                    return;
+                }
+
+                var config = JSON.parse(responseText);
+                updateConfig(config);
             }
-
-            var config = JSON.parse(request.responseText);
-
-            if (config.skiplist) {
-                var skipList = [];
-
-                config.skiplist.forEach(function (entry) {
-                    var key = Object.keys(entry)[0];
-
-                    if (key !== undefined && key.trim().length > 0) {
-                        skipList[key] = {
-                            ttl: entry[key],
-                            last_broker_call: 0
-                        };
-
-                        if (key.indexOf('*') !== -1) {
-                            var regexPattern = key.replaceAll('.', '\\.').replaceAll('*', '.*').replaceAll('/', '\\/');
-                            var regex = new RegExp(regexPattern);
-                            skipList[key].regx = regex;
-                        }
-
-                        if (window.skipList[key] !== undefined) {
-                            skipList[key].last_broker_call = window.skipList[key].last_broker_call;
-                        }
-                    }
-                });
-
-                window.skipList = skipList;
-            }
-
-            window.selfharmlist = config.selfharmlist !== undefined ? config.selfharmlist : [];
-            window.vectorExpansionRules = config.vectorExpansionRules !== undefined ? config.vectorExpansionRules : {};
-            window.bullyPhrases = config.bullyPhrases !== undefined ? decryptPhrases(config.bullyPhrases) : [];
-            window.wlBullyPhrases = config.wlBullyPhrases !== undefined ? decryptPhrases(config.wlBullyPhrases) : [];
-            window.thinkTwiceSites = config.thinkTwiceSites !== undefined ? config.thinkTwiceSites : [];
-
-            if (config.ttl !== undefined && 1000 * config.ttl !== window.currentConfigTTL) {
-                window.currentConfigTTL = 1000 * config.ttl;
-                updateTTLForCrextnCacheConfig(window.currentConfigTTL);
-            } else if (config.ttl === undefined && window.defaultConfigTTL !== window.currentConfigTTL) {
-                window.currentConfigTTL = window.defaultConfigTTL;
-                updateTTLForCrextnCacheConfig(window.defaultConfigTTL);
-            }
-
-            window.proxyIdentification = config.proxyIdentification !== undefined ? config.proxyIdentification : [];
         }
     };
 
     request.send();
 }
+
+function updateConfig(config) {
+    var skipList = {};
+
+    if (config.skiplist) {
+        config.skiplist.forEach(function (entry) {
+            var key = Object.keys(entry)[0].trim();
+            if (key.length > 0) {
+                skipList[key] = {
+                    ttl: entry[key],
+                    last_broker_call: 0
+                };
+
+                if (key.includes('*')) {
+                    var regexPattern = key.replaceAll('.', '\\.').replaceAll('*', '.*').replaceAll('/', '\\/');
+                    skipList[key].regx = new RegExp(regexPattern);
+                }
+
+                if (window.skipList[key] !== undefined) {
+                    skipList[key].last_broker_call = window.skipList[key].last_broker_call;
+                }
+            }
+        });
+    }
+
+    window.skipList = skipList;
+    window.selfharmlist = config.selfharmlist !== undefined ? config.selfharmlist : [];
+    window.vectorExpansionRules = config.vectorExpansionRules !== undefined ? config.vectorExpansionRules : {};
+    window.bullyPhrases = config.bullyPhrases !== undefined ? decryptPhrases(config.bullyPhrases) : [];
+    window.wlBullyPhrases = config.wlBullyPhrases !== undefined ? decryptPhrases(config.wlBullyPhrases) : [];
+    window.thinkTwiceSites = config.thinkTwiceSites !== undefined ? config.thinkTwiceSites : [];
+
+    if (config.ttl !== undefined) {
+        var newConfigTTL = 1000 * config.ttl;
+        if (newConfigTTL !== window.currentConfigTTL) {
+            window.currentConfigTTL = newConfigTTL;
+            updateTTLForCrextnCacheConfig(window.currentConfigTTL);
+        }
+    } else if (window.defaultConfigTTL !== window.currentConfigTTL) {
+        window.currentConfigTTL = window.defaultConfigTTL;
+        updateTTLForCrextnCacheConfig(window.defaultConfigTTL);
+    }
+
+    window.proxyIdentification = config.proxyIdentification !== undefined ? config.proxyIdentification : [];
+}
+
 
 function updateTTLForCrextnCacheConfig(interval) {
     if (window.cacheIntervalId !== undefined) {
@@ -1248,17 +1383,18 @@ function clearBlob() {
     });
 }
 
-function notifyProxyIdentified(e) {
-    if (isClusterURLAvailable() && !identifiedWebsites.includes(e.proxyUrl)) {
-        var t = createNonBlockingRequest('post', window.clusterUrl + '/proxy'), n = new FormData();
-        n.append('domain', e.proxyUrl);
-        n.append('proxyFamily', e.proxyName);
-        n.append('rules', JSON.stringify(e.targetElements || e.rules));
+function notifyProxyIdentified(proxyInfo) {
+    if (isClusterURLAvailable() && !identifiedWebsites.includes(proxyInfo.proxyUrl)) {
+        var request = createNonBlockingRequest('POST', window.clusterUrl + '/proxy');
+        var formData = new FormData();
+        formData.append('domain', proxyInfo.proxyUrl);
+        formData.append('proxyFamily', proxyInfo.proxyName);
+        formData.append('rules', JSON.stringify(proxyInfo.targetElements || proxyInfo.rules));
         try {
-            t.send(n);
-            identifiedWebsites.push(e.proxyUrl);
-        } catch (e) {
-            console.log('identifying proxy failed');
+            request.send(formData);
+            identifiedWebsites.push(proxyInfo.proxyUrl);
+        } catch (error) {
+            console.log('Identifying proxy failed');
         }
     }
 }
@@ -1596,121 +1732,55 @@ function getYTOptions() {
         }
     }
 }
-function onBeforeRequestListener(e, t = false) {
-    var n, o = e.url;
-    if ('https://www.pornhub.com/testfiltering' == e.url) {
+function onBeforeRequestListener(request, t = false) {
+    var url = request.url;
+    if (url === 'https://www.pornhub.com/testfiltering' || url === 'https://swearing.testfiltering.com/') {
         return { cancel: true };
     }
-    if ('https://swearing.testfiltering.com/' == e.url) {
-        return { cancel: true };
+
+    if (request.type === 'main_frame' && url.indexOf('securly') === -1 && window.tabsBeingBlocked[request.tabId] !== undefined) {
+        return { redirectUrl: window.tabsBeingBlocked[request.tabId] };
     }
-    if ('main_frame' == e.type && -1 == e.url.indexOf('securly') && void 0 !== window.tabsBeingBlocked[e.tabId]) {
-        return { redirectUrl: window.tabsBeingBlocked[e.tabId] };
+
+    var mainHost = new URL(request.initiator).hostname.toLowerCase();
+    if (mainHost.startsWith('www.')) {
+        mainHost = mainHost.substring(4);
     }
-    n = o;
-    'GET' === e.method && interceptRequest(e);
-    'POST' == e.method && interceptRequest(e);
-    var r = interceptOrNot(e);
-    if ('sub_frame' == e.type && 'file://' == e.initiator && 0 === e.url.indexOf('http') && (r = 1), 1 == r && (r = checkSkipListCaching(e)), 1 != r) {
-        window.youtubeLastCheck = null;
-        n.indexOf('youtube') && (window.ytURL = n, 'UNKNOWN_SCHOOL' != window.clusterUrl && 'AVOID_OS' != window.clusterUrl && (null == window.ytOptionsLastCheck || Math.floor(Date.now() / 1000) - window.ytOptionsLastCheck >= 3600) && getYTOptions(), chrome.runtime.onConnect.addListener(function (t) {
-            'yt' == t.name && t.onMessage.addListener(function (o, r) {
-                if (window.checkYouTube && n.indexOf('youtube') && 'GET' == e.method && 'getYoutubeOptions' != o.action && 'script' !== e.type && 'stylesheet' !== e.type && 'image' !== e.type) {
-                    if (window.youtubeLastCheck = Date.now(), 'unknown' != window.clusterUrl && 'AVOID_OS' != window.clusterUrl && 'UNKNOWN_SCHOOL' != window.clusterUrl && -1 === window.youtubeFrames.indexOf(t.sender.frameId) && (null != o.channelId || null != o.videoId || null != o.category)) {
-                        window.youtubeFrames[youtubeFrames.length] = t.sender.frameId;
-                        let n = {
-                            channelId: o.channelId,
-                            videoId: o.videoId,
-                            category: o.category
-                        }, s = window.btoa(r.sender.url), a = document.createElement('a');
-                        a.href = r.sender.url;
-                        c = normalizeHostname(c = a.hostname.toLowerCase());
-                        let l = '', d = '';
-                        if (void 0 !== e.initiator) {
-                            var i = new URL(e.initiator);
-                            d = window.btoa(i.hostname.toLowerCase());
-                        }
-                        let u = getRespArrTabs(c, s, l, r.sender.url, r.sender.tab.id, d, o.embedded, this, n), h = u[0], f = u[1];
-                        u[2];
-                        'DENY' == h ? 0 == o.embedded && chrome.tabs.update(r.sender.tab, takeDenyAction(f, 2, s)) : this.iframeResp.length > 0 && 'DENY' == this.iframeResp[0] && (this.iframeResp = '', t.postMessage({
-                            hideRecommended: window.hideRecommended,
-                            hideComments: window.hideComments,
-                            hideSidebar: window.hideSidebar,
-                            hideThumbnails: window.hideThumbnails,
-                            checkEmbed: true,
-                            action: 'deny',
-                            url: this.iframeBlockUrl
-                        }));
+
+    if (window.vectorExpansionRules && window.vectorExpansionRules[mainHost]) {
+        for (let rule of window.vectorExpansionRules[mainHost]) {
+            try {
+                let pattern = rule.pattern.replaceAll('.', '\\.').replaceAll('*', '.*').replaceAll('/', '\\/');
+                let regex = new RegExp(pattern);
+
+                if (regex.test(request.url)) {
+                    if (request.method === 'GET') {
+                        interceptRequest(request);
+                    } else if (request.method === 'POST') {
+                        interceptRequest(request);
                     }
-                } else {
-                    'getYoutubeOptions' == o.action && t.postMessage({
-                        hideRecommended: window.hideRecommended,
-                        hideComments: window.hideComments,
-                        hideSidebar: window.hideSidebar,
-                        hideThumbnails: window.hideThumbnails
-                    });
                 }
-            });
-        }), chrome.runtime.onConnect.addListener(function (e) {
-            'gmaps' == e.name && e.onMessage.addListener(function (e, t) {
-                if (e.url != window.lastMapsUrl) {
-                    window.lastMapsUrl = e.url;
-                    let n = window.btoa(e.url), o = document.createElement('a');
-                    o.href = e.url;
-                    let r = getRespArrTabs(c = normalizeHostname(c = o.hostname.toLowerCase()), n, '', e.url, t.sender.tab.id, '', false, this), i = r[0], s = r[1];
-                    r[2];
-                    'DENY' == i && chrome.tabs.update(t.sender.tab, takeDenyAction(s, 2, n));
-                }
-            });
-        }));
-    } else {
-        var i = '', s = false;
-        (l = document.createElement('a')).href = e.initiator;
-        i = window.btoa(l.hostname.toLowerCase());
-        'sub_frame' == e.type && (i = window.btoa(l.hostname.toLowerCase()), s = true, window.isSubFrame = true, window.brokredRequest = []);
-        var a;
-        if (n.length > 1000 && (n = n.substring(0, 1000)), a = getSocialPost(e, n), -1 != n.indexOf('youtube.com') && -1 != n.indexOf('youtubei/v1/search') && (n = getYoutubeSearchURL(e, n)), false === a) {
-            return;
-        }
-        var c, l, d = window.btoa(n), u = n.replace(/^(?:https?:\/\/)?/i, '');
-        if (u.endsWith('/') && (u = u.slice(0, -1)), window.brokeredArrIndex++, window.brokeredArrIndex >= 20 && (window.brokeredArrIndex = 0), -1 != window.brokredRequest.indexOf(u) && '' === a || (window.brokredRequest[window.brokeredArrIndex] = u), 'translate.google.com' == new URL(n).hostname ? c = extractTranslateHostname(n) : ((l = document.createElement('a')).href = n, c = l.hostname.toLowerCase()), c = normalizeHostname(c), window.geolocation && getRemoteIPGeo(), -1 !== n.indexOf('youtube.') && false === window.checkYouTube || -1 === n.indexOf('youtube.') || e.initiator !== window.refDomain) {
-            var h = getRespArrTabs(c, d, a, n, e.tabId, i, s, this, null, t);
-        }
-        var f = h[0], w = h[1], g = h[2], p = (h[3], h[4], h[5], h[6], ''), m = '';
-        if (this.iframeResp.length > 0 && 'DENY' == this.iframeResp[0]) {
-            return this.iframeResp = '', { redirectUrl: this.iframeBlockUrl };
-        }
-        if ('DENY' == f) {
-            return takeDenyAction(w, g, d);
-        }
-        if ('PAUSE' == f) {
-            return getPauseAction(d);
-        }
-        var v = false;
-        if ('SS' == f && (false !== (p = takeSafeSearchAction(c, o)) && (o = p), v = true), 'CC' == g && (false !== (m = takeCreativeCommonImageSearchAction(o)) && (o = m), v = true), -1 !== n.indexOf('youtube.') && 'REFWL' == g ? (window.refDomain = e.initiator, window.checkYouTube = false) : -1 !== n.indexOf('youtube.') && (window.checkYouTube = true), true === v) {
-            if (-1 !== n.indexOf('google.') && -1 !== n.indexOf('/maps/')) {
-                return;
+            } catch (error) {
+                // Handle error
             }
-            if (-1 !== n.indexOf('google.')) {
-                if (/q=/.test(n)) {
-                    if (-1 !== n.indexOf('google.') && -1 === n.indexOf('safe=active') && -1 === n.indexOf('safe=strict')) {
-                        return { redirectUrl: o };
-                    }
-                    if (false === p && false === m) {
-                        return;
-                    }
-                    if (-1 !== n.indexOf('google.') && -1 !== n.indexOf('tbm=isch') && -1 === n.indexOf('tbs=il:cl')) {
-                        return { redirectUrl: o };
-                    }
-                }
-            } else {
-                if (-1 !== n.indexOf('yahoo.com') && -1 === n.indexOf('imgl=cc') || -1 !== n.indexOf('bing.') && -1 === n.indexOf('qft+filterui:licenseType-Any')) {
-                    return { redirectUrl: o };
+        }
+    } else {
+        var initiatorHost = new URL(request.initiator).hostname.toLowerCase();
+        var mainHost = initiatorHost.startsWith('www.') ? initiatorHost.substring(4) : initiatorHost;
+
+        if (!window.vectorExpansionRules || !window.vectorExpansionRules[mainHost]) {
+            var hostname = new URL(request.url).hostname.toLowerCase();
+            if (hostname.indexOf('youtube') !== -1) {
+                window.youtubeLastCheck = null;
+                window.ytURL = url;
+                if (window.clusterUrl !== 'UNKNOWN_SCHOOL' && window.clusterUrl !== 'AVOID_OS' && (window.ytOptionsLastCheck === null || Math.floor(Date.now() / 1000) - window.ytOptionsLastCheck >= 3600)) {
+                    getYTOptions();
                 }
             }
         }
     }
 }
+
 const wellPathWidgBg = (function () {
     var cachedResponse = null;
     var lastCacheTime = 0;
@@ -1815,104 +1885,117 @@ const wellPathWidgBg = (function () {
     }), { triggerWidgetDisplay: displayWidget };
 })();
 
-function interceptRequest(e) {
+function interceptRequest(request) {
     if (!window.vectorExpansionRules) {
         return;
     }
-    var t = Object.keys(window.vectorExpansionRules);
-    if (0 == t.length) {
+
+    var hosts = Object.keys(window.vectorExpansionRules);
+    if (hosts.length === 0) {
         return;
     }
-    var n = document.createElement('a');
-    n.href = e.initiator;
-    mainHost = cleanURL(n.hostname.toLowerCase());
-    -1 != mainHost.indexOf('www.') && (mainHost = mainHost.replace('www.', ''));
-    if (t && -1 != t.indexOf(mainHost)) {
-        for (let t = 0; t < window.vectorExpansionRules[mainHost].length; t += 1) {
+
+    var initiatorHost = new URL(request.initiator).hostname.toLowerCase();
+    var mainHost = cleanURL(initiatorHost);
+    if (mainHost.startsWith('www.')) {
+        mainHost = mainHost.substring(4);
+    }
+
+    if (hosts.includes(mainHost)) {
+        for (let i = 0; i < window.vectorExpansionRules[mainHost].length; i++) {
             try {
-                const n = window.vectorExpansionRules[mainHost][t];
-                let o = n.pattern, r = n.context, i = n.field, s = n.content, a = o.replaceAll('.', '\\.').replaceAll('*', '.*').replaceAll('/', '\\/'), c = new RegExp(a), l = '';
-                c.test(e.url) && ('GET' === e.method ? interceptGetRequest(e, l, mainHost, r, n, i) : 'POST' === e.method && interceptPostRequest(e, mainHost, s, i, r, l, false, n));
-            } catch (e) {
+                const rule = window.vectorExpansionRules[mainHost][i];
+                let pattern = rule.pattern.replaceAll('.', '\\.').replaceAll('*', '.*').replaceAll('/', '\\/');
+                let regex = new RegExp(pattern);
+
+                if (regex.test(request.url)) {
+                    if (request.method === 'GET') {
+                        interceptGetRequest(request, '', mainHost, rule.context, rule, rule.field);
+                    } else if (request.method === 'POST') {
+                        interceptPostRequest(request, mainHost, rule.content, rule.field, rule.context, '', false, rule);
+                    }
+                }
+            } catch (error) {
+                // Handle error
             }
         }
     }
 }
-function interceptPostRequest(e, t, n, o, r, i, s, a) {
-    if ('JSON_STR' == n) {
-        let n = a.data.split('|').reduce((e, t) => e[t], e);
-        if (jsonInfo = JSON.parse(n), Array.isArray(o)) {
-            for (let e = 0; e < o.length; e += 1) {
-                tempText = removeHTMLTags(o[e].split('|').reduce((e, t) => e[t], jsonInfo));
-                i = i.length > 0 ? i + ' ' + tempText : tempText;
+function interceptPostRequest(event, url, type, domain, media, caption, story, options) {
+    if ('JSON_STR' == type) {
+        let jsonData = options.data.split('|').reduce((acc, item) => acc[item], event);
+        if (jsonInfo = JSON.parse(jsonData), Array.isArray(media)) {
+            for (let i = 0; i < media.length; i += 1) {
+                tempText = removeHTMLTags(media[i].split('|').reduce((acc, item) => acc[item], jsonInfo));
+                caption = caption.length > 0 ? caption + ' ' + tempText : tempText;
             }
         } else {
-            i = removeHTMLTags(o.split('|').reduce((e, t) => e[t], jsonInfo));
+            caption = removeHTMLTags(media.split('|').reduce((acc, item) => acc[item], jsonInfo));
         }
-        if (t.includes('pinterest.')) {
-            const e = jsonInfo.options.story_pin;
-            e && (parsedTitle = JSON.parse(e).metadata.pin_title, i = i.length > 0 ? i + ' ' + parsedTitle : parsedTitle);
+        if (url.includes('pinterest.')) {
+            const storyInfo = jsonInfo.options.story_pin;
+            storyInfo && (parsedTitle = JSON.parse(storyInfo).metadata.pin_title, caption = caption.length > 0 ? caption + ' ' + parsedTitle : parsedTitle);
         }
     } else {
-        if ('ENCODED_STR' == n) {
-            if (buff = e.requestBody.raw[0].bytes, postContent = buff2StrWithEmoji(buff), Array.isArray(o)) {
-                for (let e = 0; e < o.length; e += 1) {
-                    tempText = o[e].split('|').reduce((e, t) => new URLSearchParams(e).get(t), postContent);
-                    i = i.length > 0 ? i + ' ' + tempText : tempText;
+        if ('ENCODED_STR' == type) {
+            if (buff = event.requestBody.raw[0].bytes, postData = buff2StrWithEmoji(buff), Array.isArray(media)) {
+                for (let i = 0; i < media.length; i += 1) {
+                    tempText = media[i].split('|').reduce((acc, item) => new URLSearchParams(acc).get(item), postData);
+                    caption = caption.length > 0 ? caption + ' ' + tempText : tempText;
                 }
             } else {
-                i = o.split('|').reduce((e, t) => new URLSearchParams(e).get(t), postContent);
+                caption = media.split('|').reduce((acc, item) => new URLSearchParams(acc).get(item), postData);
             }
-            i = removeHTMLTags('reddit.com' == t ? fetchStringFromJSONObj(JSON.parse(i), 't') : i);
+            caption = removeHTMLTags('reddit.com' == url ? fetchStringFromJSONObj(JSON.parse(caption), 't') : caption);
         } else {
-            if ('ENCODED' == n) {
-                buff = e.requestBody.raw[0].bytes;
-                n = buff2StrWithEmoji(buff);
-                let r = JSON.parse(n);
-                if (Array.isArray(o)) {
-                    for (let e = 0; e < o.length; e += 1) {
-                        t.includes('tumblr.com') && 'content' == o[e] ? tempText = removeHTMLTags(fetchStringFromJSONObj(r, 'text')) : tempText = removeHTMLTags(o[e].split('|').reduce((e, t) => e[t], r));
-                        i = i.length > 0 ? i + ' ' + tempText : tempText;
+            if ('ENCODED' == type) {
+                buff = event.requestBody.raw[0].bytes;
+                postData = buff2StrWithEmoji(buff);
+                let parsedData = JSON.parse(postData);
+                if (Array.isArray(media)) {
+                    for (let i = 0; i < media.length; i += 1) {
+                        url.includes('tumblr.com') && 'content' == media[i] ? tempText = removeHTMLTags(fetchStringFromJSONObj(parsedData, 'text')) : tempText = removeHTMLTags(media[i].split('|').reduce((acc, item) => acc[item], parsedData));
+                        caption = caption.length > 0 ? caption + ' ' + tempText : tempText;
                     }
                 } else {
-                    i = removeHTMLTags(o.split('|').reduce((e, t) => -1 == t.indexOf('!') ? e[t] : e[t.split('!')[0]][t.split('!')[1]], r));
+                    caption = removeHTMLTags(media.split('|').reduce((acc, item) => -1 == item.indexOf('!') ? acc[item] : acc[item.split('!')[0]][item.split('!')[1]], parsedData));
                 }
             } else {
-                if ('DOUBLE_ENCODED' == n) {
-                    buff = e.requestBody.raw[0].bytes;
-                    n = buff2StrWithEmoji(buff);
-                    let s = JSON.parse(n), a = o.split('||');
-                    if ('quora.com' == t && (s && s.queryName && -1 != s.queryName.indexOf('answerCreate') && (r = 'ANSWER'), s && s.queryName && -1 != s.queryName.toLowerCase().indexOf('draft') && true), a.length > 0) {
-                        var c = a[0].split('|').reduce((e, t) => e[t], s);
-                        if (c) {
-                            i = removeHTMLTags(i = fetchStringFromJSONObj(JSON.parse(c), 'text'));
+                if ('DOUBLE_ENCODED' == type) {
+                    buff = event.requestBody.raw[0].bytes;
+                    postData = buff2StrWithEmoji(buff);
+                    let jsonData = JSON.parse(postData), options = media.split('||');
+                    if ('quora.com' == url && (jsonData && jsonData.queryName && -1 != jsonData.queryName.indexOf('answerCreate') && (domain = 'ANSWER'), jsonData && jsonData.queryName && -1 != jsonData.queryName.toLowerCase().indexOf('draft') && true), options.length > 0) {
+                        var content = options[0].split('|').reduce((acc, item) => acc[item], jsonData);
+                        if (content) {
+                            caption = removeHTMLTags(caption = fetchStringFromJSONObj(JSON.parse(content), 'text'));
                         }
                     }
                 } else {
-                    if ('QUERY_PARAM' == n) {
-                        i = new Proxy(new URLSearchParams(e.url), { get: (e, t) => e.get(t) })[o];
+                    if ('QUERY_PARAM' == type) {
+                        caption = new Proxy(new URLSearchParams(event.url), { get: (obj, prop) => obj.get(prop) })[media];
                     } else {
-                        if (Array.isArray(o)) {
-                            for (let n = 0; n < o.length; n += 1) {
-                                tempText = removeHTMLTags(o[n].split('|').reduce((e, t) => {
+                        if (Array.isArray(media)) {
+                            for (let i = 0; i < media.length; i += 1) {
+                                tempText = removeHTMLTags(media[i].split('|').reduce((acc, item) => {
                                     try {
-                                        return -1 == t.indexOf('!') ? e[t] : e[t.split('!')[0]][t.split('!')[1]];
-                                    } catch (e) {
+                                        return -1 == item.indexOf('!') ? acc[item] : acc[item.split('!')[0]][item.split('!')[1]];
+                                    } catch (error) {
                                         return '';
                                     }
-                                }, e));
-                                'reddit.com' == t && -1 != o[n].indexOf('richtext_json') && tempText.length > 0 && (textStr = removeHTMLTags(fetchStringFromJSONObj(JSON.parse(tempText), 't')), captionStr = removeHTMLTags(fetchStringFromJSONObj(JSON.parse(tempText), 'c')), tempText = textStr + ' ' + captionStr);
-                                i = i.length > 0 ? i + ' ' + tempText : tempText;
+                                }, event));
+                                'reddit.com' == url && -1 != media[i].indexOf('richtext_json') && tempText.length > 0 && (textStr = removeHTMLTags(fetchStringFromJSONObj(JSON.parse(tempText), 't')), captionStr = removeHTMLTags(fetchStringFromJSONObj(JSON.parse(tempText), 'c')), tempText = textStr + ' ' + captionStr);
+                                caption = caption.length > 0 ? caption + ' ' + tempText : tempText;
                             }
                         } else {
-                            i = removeHTMLTags(o.split('|').reduce((e, t) => -1 == t.indexOf('!') ? e[t] : e[t.split('!')[0]][t.split('!')[1]], e));
+                            caption = removeHTMLTags(media.split('|').reduce((acc, item) => -1 == item.indexOf('!') ? acc[item] : acc[item.split('!')[0]][item.split('!')[1]], event));
                         }
                     }
                 }
             }
         }
     }
-    i && -1 != i.trim().indexOf(' ') && sendSocialPostToServer(i, t, r, e.url);
+    caption && -1 != caption.trim().indexOf(' ') && sendSocialPostToServer(caption, url, domain, event.url);
 }
 function interceptGetRequest(request, parameterName, token, message, host, paramName) {
     const data = { token: message };

@@ -1,26 +1,41 @@
 function ENCRYPT(e) {
-    function t(e, t) {
+    // Function to perform a left rotation
+    function rotateLeft(e, t) {
         return e << t | e >>> 32 - t;
     }
-    function n(e) {
+
+    // Function to convert a number to hexadecimal string
+    function toHex(e) {
         var t, n = '';
         for (t = 7; t >= 0; t--) {
             n += (e >>> 4 * t & 15).toString(16);
         }
         return n;
     }
-    var o, r, i, s, a, c, l, d, u, h = new Array(80), f = 1732584193, w = 4023233417, g = 2562383102, p = 271733878, m = 3285377520, v = (e = function (e) {
-        e = e.replace(/\r\n/g, '\n');
-        for (var t = '', n = 0; n < e.length; n++) {
-            var o = e.charCodeAt(n);
-            o < 128 ? t += String.fromCharCode(o) : o > 127 && o < 2048 ? (t += String.fromCharCode(o >> 6 | 192), t += String.fromCharCode(63 & o | 128)) : (t += String.fromCharCode(o >> 12 | 224), t += String.fromCharCode(o >> 6 & 63 | 128), t += String.fromCharCode(63 & o | 128));
-        }
-        return t;
-    }(e)).length, y = new Array();
+
+    var o, r, i, s, a, c, l, d, u, h = new Array(80),
+        f = 1732584193,
+        w = 4023233417,
+        g = 2562383102,
+        p = 271733878,
+        m = 3285377520,
+        v = (e = function (e) {
+            e = e.replace(/\r\n/g, '\n');
+            for (var t = '', n = 0; n < e.length; n++) {
+                var o = e.charCodeAt(n);
+                o < 128 ? t += String.fromCharCode(o) : o > 127 && o < 2048 ? (t += String.fromCharCode(o >> 6 | 192), t += String.fromCharCode(63 & o | 128)) : (t += String.fromCharCode(o >> 12 | 224), t += String.fromCharCode(o >> 6 & 63 | 128), t += String.fromCharCode(63 & o | 128));
+            }
+            return t;
+        }(e)).length,
+        y = new Array();
+
+    // Convert input string to array of 32-bit integers
     for (r = 0; r < v - 3; r += 4) {
         i = e.charCodeAt(r) << 24 | e.charCodeAt(r + 1) << 16 | e.charCodeAt(r + 2) << 8 | e.charCodeAt(r + 3);
         y.push(i);
     }
+
+    // Pad the input to ensure its length is a multiple of 512 bits
     switch (v % 4) {
         case 0:
             r = 2147483648;
@@ -34,45 +49,53 @@ function ENCRYPT(e) {
         case 3:
             r = e.charCodeAt(v - 3) << 24 | e.charCodeAt(v - 2) << 16 | e.charCodeAt(v - 1) << 8 | 128;
     }
+
+    // Push the padded length to the array
     for (y.push(r); y.length % 16 != 14;) {
         y.push(0);
     }
-    for (y.push(v >>> 29), y.push(v << 3 & 4294967295), o = 0; o < y.length; o += 16) {
+
+    // Push the length of the original message (in bits)
+    y.push(v >>> 29);
+    y.push(v << 3 & 4294967295);
+
+    // Main MD5 algorithm loop
+    for (o = 0; o < y.length; o += 16) {
         for (r = 0; r < 16; r++) {
             h[r] = y[o + r];
         }
         for (r = 16; r <= 79; r++) {
-            h[r] = t(h[r - 3] ^ h[r - 8] ^ h[r - 14] ^ h[r - 16], 1);
+            h[r] = rotateLeft(h[r - 3] ^ h[r - 8] ^ h[r - 14] ^ h[r - 16], 1);
         }
         for (s = f, a = w, c = g, l = p, d = m, r = 0; r <= 19; r++) {
-            u = t(s, 5) + (a & c | ~a & l) + d + h[r] + 1518500249 & 4294967295;
+            u = rotateLeft(s, 5) + (a & c | ~a & l) + d + h[r] + 1518500249 & 4294967295;
             d = l;
             l = c;
-            c = t(a, 30);
+            c = rotateLeft(a, 30);
             a = s;
             s = u;
         }
         for (r = 20; r <= 39; r++) {
-            u = t(s, 5) + (a ^ c ^ l) + d + h[r] + 1859775393 & 4294967295;
+            u = rotateLeft(s, 5) + (a ^ c ^ l) + d + h[r] + 1859775393 & 4294967295;
             d = l;
             l = c;
-            c = t(a, 30);
+            c = rotateLeft(a, 30);
             a = s;
             s = u;
         }
         for (r = 40; r <= 59; r++) {
-            u = t(s, 5) + (a & c | a & l | c & l) + d + h[r] + 2400959708 & 4294967295;
+            u = rotateLeft(s, 5) + (a & c | a & l | c & l) + d + h[r] + 2400959708 & 4294967295;
             d = l;
             l = c;
-            c = t(a, 30);
+            c = rotateLeft(a, 30);
             a = s;
             s = u;
         }
         for (r = 60; r <= 79; r++) {
-            u = t(s, 5) + (a ^ c ^ l) + d + h[r] + 3395469782 & 4294967295;
+            u = rotateLeft(s, 5) + (a ^ c ^ l) + d + h[r] + 3395469782 & 4294967295;
             d = l;
             l = c;
-            c = t(a, 30);
+            c = rotateLeft(a, 30);
             a = s;
             s = u;
         }
@@ -82,7 +105,9 @@ function ENCRYPT(e) {
         p = p + l & 4294967295;
         m = m + d & 4294967295;
     }
-    return (u = n(f) + n(w) + n(g) + n(p) + n(m)).toLowerCase();
+
+    // Concatenate and return the hash in lowercase hexadecimal format
+    return (u = toHex(f) + toHex(w) + toHex(g) + toHex(p) + toHex(m)).toLowerCase();
 }
 
 !function (e, t) {
@@ -1098,27 +1123,34 @@ function ENCRYPT(e) {
     }(), function (e) {
         var t = l, n = t.lib, o = n.WordArray, r = n.Hasher, i = t.x64.Word, s = t.algo, a = [], c = [], d = [];
         !function () {
+            // Calculate round constants (a)
             for (var e = 1, t = 0, n = 0; n < 24; n++) {
-                a[e + 5 * t] = (n + 1) * (n + 2) / 2 % 64;
-                var o = (2 * e + 3 * t) % 5;
-                e = t % 5;
-                t = o;
+                a[e + 5 * t] = (n + 1) * (n + 2) / 2 % 64; // Calculate round constant for current round and position
+                var o = (2 * e + 3 * t) % 5; // Calculate new column index
+                e = t % 5; // Update row index
+                t = o; // Update column index
             }
+
+            // Calculate offset values (c)
             for (e = 0; e < 5; e++) {
                 for (t = 0; t < 5; t++) {
-                    c[e + 5 * t] = t + (2 * e + 3 * t) % 5 * 5;
+                    c[e + 5 * t] = t + (2 * e + 3 * t) % 5 * 5; // Calculate offset for current position
                 }
             }
+
+            // Generate round constants (d)
             for (var r = 1, s = 0; s < 24; s++) {
-                for (var l = 0, u = 0, h = 0; h < 7; h++) {
+                var l = 0, u = 0;
+                for (var h = 0; h < 7; h++) {
                     if (1 & r) {
                         var f = (1 << h) - 1;
-                        f < 32 ? u ^= 1 << f : l ^= 1 << f - 32;
+                        f < 32 ? u ^= 1 << f : l ^= 1 << f - 32; // Apply bit manipulation based on current round constant
                     }
-                    128 & r ? r = r << 1 ^ 113 : r <<= 1;
+                    128 & r ? r = r << 1 ^ 113 : r <<= 1; // Update round constant
                 }
-                d[s] = i.create(l, u);
+                d[s] = i.create(l, u); // Store generated round constant
             }
+
         }();
         var u = [];
         !function () {
@@ -1142,60 +1174,112 @@ function ENCRYPT(e) {
                     (B = n[r]).high ^= s;
                     B.low ^= i;
                 }
-                for (var l = 0; l < 24; l++) {
-                    for (var h = 0; h < 5; h++) {
-                        for (var f = 0, w = 0, g = 0; g < 5; g++) {
-                            f ^= (B = n[h + 5 * g]).high;
-                            w ^= B.low;
+                // Iterate 24 times
+                for (var round = 0; round < 24; round++) {
+                    // Theta step
+                    for (var lane = 0; lane < 5; lane++) {
+                        // Calculate parity bits for each column
+                        var parityHigh = 0, parityLow = 0;
+                        for (var col = 0; col < 5; col++) {
+                            var state = stateArray[lane + 5 * col];
+                            parityHigh ^= state.high;
+                            parityLow ^= state.low;
                         }
-                        var p = u[h];
-                        p.high = f;
-                        p.low = w;
+                        // Update state with calculated parity bits
+                        var tempState = tempStates[lane];
+                        tempState.high = parityHigh;
+                        tempState.low = parityLow;
                     }
-                    for (h = 0; h < 5; h++) {
-                        var m = u[(h + 4) % 5], v = u[(h + 1) % 5], y = v.high, b = v.low;
-                        for (f = m.high ^ (y << 1 | b >>> 31), w = m.low ^ (b << 1 | y >>> 31), g = 0; g < 5; g++) {
-                            (B = n[h + 5 * g]).high ^= f;
-                            B.low ^= w;
+
+                    // Rho and Pi steps
+                    for (lane = 0; lane < 5; lane++) {
+                        // Apply Rho and Pi transformations
+                        var current = tempStates[lane],
+                            previous = tempStates[(lane + 4) % 5],
+                            next = tempStates[(lane + 1) % 5],
+                            nextHigh = next.high,
+                            nextLow = next.low,
+                            rho = previous.high ^ (nextHigh << 1 | nextLow >>> 31),
+                            pi = previous.low ^ (nextLow << 1 | nextHigh >>> 31);
+
+                        // Update state with transformed values
+                        for (col = 0; col < 5; col++) {
+                            var index = lane + 5 * col,
+                                newState = stateArray[index];
+                            newState.high ^= rho;
+                            newState.low ^= pi;
                         }
                     }
-                    for (var _ = 1; _ < 25; _++) {
-                        var O = (B = n[_]).high, k = B.low, x = a[_];
-                        x < 32 ? (f = O << x | k >>> 32 - x, w = k << x | O >>> 32 - x) : (f = k << x - 32 | O >>> 64 - x, w = O << x - 32 | k >>> 64 - x);
-                        var S = u[c[_]];
-                        S.high = f;
-                        S.low = w;
-                    }
-                    var C = u[0], L = n[0];
-                    C.high = L.high;
-                    C.low = L.low;
-                    for (h = 0; h < 5; h++) {
-                        for (g = 0; g < 5; g++) {
-                            var B = n[_ = h + 5 * g], R = u[_], U = u[(h + 1) % 5 + 5 * g], N = u[(h + 2) % 5 + 5 * g];
-                            B.high = R.high ^ ~U.high & N.high;
-                            B.low = R.low ^ ~U.low & N.low;
+
+                    // Chi step
+                    for (var index = 0; index < 25; index++) {
+                        // Apply Chi transformation
+                        var current = stateArray[index],
+                            originalHigh = current.high,
+                            originalLow = current.low,
+                            shift = roundConstants[index];
+
+                        var shiftedHigh, shiftedLow;
+                        if (shift < 32) {
+                            shiftedHigh = originalHigh << shift | originalLow >>> (32 - shift);
+                            shiftedLow = originalLow << shift | originalHigh >>> (32 - shift);
+                        } else {
+                            shiftedHigh = originalLow << (shift - 32) | originalHigh >>> (64 - shift);
+                            shiftedLow = originalHigh << (shift - 32) | originalLow >>> (64 - shift);
                         }
+
+                        // Update state with transformed values
+                        var newState = tempStates[chiIndices[index]];
+                        newState.high = shiftedHigh;
+                        newState.low = shiftedLow;
                     }
-                    B = n[0];
-                    var A = d[l];
-                    B.high ^= A.high;
-                    B.low ^= A.low;
+
+                    // Iota step
+                    var iotaConstant = roundConstants[round];
+                    var iotaState = stateArray[0];
+                    iotaState.high ^= iotaConstant.high;
+                    iotaState.low ^= iotaConstant.low;
                 }
+
             },
             _doFinalize: function () {
-                var t = this._data, n = t.words, r = (this._nDataBytes, 8 * t.sigBytes), i = 32 * this.blockSize;
-                n[r >>> 5] |= 1 << 24 - r % 32;
-                n[(e.ceil((r + 1) / i) * i >>> 5) - 1] |= 128;
-                t.sigBytes = 4 * n.length;
+                // Get data and state variables
+                var data = this._data,
+                    words = data.words,
+                    sigBytes = 8 * data.sigBytes,
+                    blockSize = 32 * this.blockSize;
+
+                // Add padding bits
+                words[sigBytes >>> 5] |= 1 << 24 - sigBytes % 32;
+                words[(Math.ceil((sigBytes + 1) / blockSize) * blockSize >>> 5) - 1] |= 128;
+
+                // Update signature bytes
+                data.sigBytes = 4 * words.length;
+
+                // Process data
                 this._process();
-                for (var s = this._state, a = this.cfg.outputLength / 8, c = a / 8, l = [], d = 0; d < c; d++) {
-                    var u = s[d], h = u.high, f = u.low;
-                    h = 16711935 & (h << 8 | h >>> 24) | 4278255360 & (h << 24 | h >>> 8);
-                    f = 16711935 & (f << 8 | f >>> 24) | 4278255360 & (f << 24 | f >>> 8);
-                    l.push(f);
-                    l.push(h);
+
+                // Retrieve state and output length
+                var state = this._state,
+                    outputLength = this.cfg.outputLength / 8,
+                    wordsPerInt = outputLength / 8,
+                    result = [];
+
+                // Convert state to output format
+                for (var i = 0; i < wordsPerInt; i++) {
+                    var word = state[i],
+                        high = word.high,
+                        low = word.low;
+
+                    // Convert endianess and push to result array
+                    high = 16711935 & (high << 8 | high >>> 24) | 4278255360 & (high << 24 | high >>> 8);
+                    low = 16711935 & (low << 8 | low >>> 24) | 4278255360 & (low << 24 | low >>> 8);
+                    result.push(low);
+                    result.push(high);
                 }
-                return new o.init(l, a);
+
+                // Return new WordArray
+                return new o.init(result, outputLength);
             },
             clone: function () {
                 for (var e = r.clone.call(this), t = e._state = this._state.slice(0), n = 0; n < 25; n++) {
@@ -1662,27 +1746,49 @@ function ENCRYPT(e) {
     }(), function () {
         var e = l, t = e.lib.BlockCipher, n = e.algo, o = [], r = [], i = [], s = [], a = [], c = [], d = [], u = [], h = [], f = [];
         !function () {
-            for (var e = [], t = 0; t < 256; t++) {
+            // Initialize arrays and variables
+            var e = [], // Lookup table for Galois field multiplication
+                n = 0, // Temporary variable
+                l = 0; // Temporary variable
+
+            // Populate lookup table for Galois field multiplication
+            for (var t = 0; t < 256; t++) {
+                // Generate Galois field multiplication values
                 e[t] = t < 128 ? t << 1 : t << 1 ^ 283;
             }
-            var n = 0, l = 0;
+
+            // Iterate through each element in the lookup table
             for (t = 0; t < 256; t++) {
+                // Generate pseudo-random value using bitwise operations
                 var w = l ^ l << 1 ^ l << 2 ^ l << 3 ^ l << 4;
                 w = w >>> 8 ^ 255 & w ^ 99;
+
+                // Store values in various arrays
                 o[n] = w;
                 r[w] = n;
-                var g = e[n], p = e[g], m = e[p], v = 257 * e[w] ^ 16843008 * w;
-                ;
+
+                // Perform calculations for transformation
+                var g = e[n],
+                    p = e[g],
+                    m = e[p],
+                    v = 257 * e[w] ^ 16843008 * w;
+
+                // Update arrays with transformed values
                 s[n] = v << 16 | v >>> 16;
                 a[n] = v << 8 | v >>> 24;
                 c[n] = v;
+
+                // Perform additional calculations for transformation
                 v = 16843009 * m ^ 65537 * p ^ 257 * g ^ 16843008 * n;
                 d[w] = v << 24 | v >>> 8;
                 u[w] = v << 16 | v >>> 16;
                 h[w] = v << 8 | v >>> 24;
                 f[w] = v;
+
+                // Update temporary variables based on condition
                 n ? (n = g ^ e[e[e[m ^ g]]], l ^= e[e[l]]) : n = l = 1;
             }
+
         }();
         var w = [
             0,
@@ -2739,9 +2845,11 @@ function ENCRYPT(e) {
             ivSize: 2
         });
         function s() {
+            // Copy the current state of _C to o
             for (var e = this._X, t = this._C, n = 0; n < 8; n++) {
                 o[n] = t[n];
             }
+            // Update _C values
             t[0] = t[0] + 1295307597 + this._b | 0;
             t[1] = t[1] + 3545052371 + (t[0] >>> 0 < o[0] >>> 0 ? 1 : 0) | 0;
             t[2] = t[2] + 886263092 + (t[1] >>> 0 < o[1] >>> 0 ? 1 : 0) | 0;
@@ -2750,11 +2858,18 @@ function ENCRYPT(e) {
             t[5] = t[5] + 886263092 + (t[4] >>> 0 < o[4] >>> 0 ? 1 : 0) | 0;
             t[6] = t[6] + 1295307597 + (t[5] >>> 0 < o[5] >>> 0 ? 1 : 0) | 0;
             t[7] = t[7] + 3545052371 + (t[6] >>> 0 < o[6] >>> 0 ? 1 : 0) | 0;
+            // Update _b
             this._b = t[7] >>> 0 < o[7] >>> 0 ? 1 : 0;
+            // Calculate new values for _X based on the updated _C values
             for (n = 0; n < 8; n++) {
-                var i = e[n] + t[n], s = 65535 & i, a = i >>> 16, c = ((s * s >>> 17) + s * a >>> 15) + a * a, l = ((4294901760 & i) * i | 0) + ((65535 & i) * i | 0);
+                var i = e[n] + t[n],
+                    s = 65535 & i,
+                    a = i >>> 16,
+                    c = ((s * s >>> 17) + s * a >>> 15) + a * a,
+                    l = ((4294901760 & i) * i | 0) + ((65535 & i) * i | 0);
                 r[n] = c ^ l;
             }
+            // Update _X values
             e[0] = r[0] + (r[7] << 16 | r[7] >>> 16) + (r[6] << 16 | r[6] >>> 16) | 0;
             e[1] = r[1] + (r[0] << 8 | r[0] >>> 24) + r[7] | 0;
             e[2] = r[2] + (r[1] << 16 | r[1] >>> 16) + (r[0] << 16 | r[0] >>> 16) | 0;
@@ -2764,6 +2879,7 @@ function ENCRYPT(e) {
             e[6] = r[6] + (r[5] << 16 | r[5] >>> 16) + (r[4] << 16 | r[4] >>> 16) | 0;
             e[7] = r[7] + (r[6] << 8 | r[6] >>> 24) + r[5] | 0;
         }
+
         e.RabbitLegacy = t._createHelper(i);
     }(), l.pad.ZeroPadding = {
         pad: function (e, t) {
@@ -2877,34 +2993,53 @@ function ENCRYPT(e) {
                 r.prototype.toNumber = function () {
                     return this.unsigned ? (this.high >>> 0) * 4294967296 + (this.low >>> 0) : this.high * 4294967296 + (this.low >>> 0);
                 };
+                // Define toString method for Long integers
                 r.prototype.toString = function (e) {
+                    // Check if radix is within the valid range (2 to 36)
                     if ((e = e || 10) < 2 || 36 < e) {
                         throw RangeError('radix out of range: ' + e);
                     }
+
+                    // Return '0' if the number is zero
                     if (this.isZero()) {
                         return '0';
                     }
+
                     var t;
+
+                    // Handle negative numbers
                     if (this.isNegative()) {
+                        // If the number is MIN_VALUE, special handling is required
                         if (this.equals(r.MIN_VALUE)) {
                             var n = r.fromNumber(e), o = this.div(n);
-                            return t = o.multiply(n).subtract(this), o.toString(e) + t.toInt().toString(e);
+                            // Calculate the remainder and add it to the quotient
+                            return t = o.multiply(n).subtract(this), '-' + o.toString(e) + t.toInt().toString(e);
                         }
+                        // Negate the number and return its string representation
                         return '-' + this.negate().toString(e);
                     }
+
+                    // Initialize a Long value representing (e^6) and set t to the current number
                     var i = r.fromNumber(Math.pow(e, 6), this.unsigned);
                     t = this;
+
+                    // Iterate until t is zero
                     for (var s = ''; ;) {
+                        // Divide t by (e^6) and get the quotient and remainder
                         var a = t.div(i), c = (t.subtract(a.multiply(i)).toInt() >>> 0).toString(e);
+                        // If t is zero, return the string representation
                         if ((t = a).isZero()) {
                             return c + s;
                         }
+                        // Pad the string representation of the remainder with zeros to ensure it has six digits
                         for (; c.length < 6;) {
                             c = '0' + c;
                         }
+                        // Append the padded remainder to the result string
                         s = '' + c + s;
                     }
                 };
+
                 r.prototype.getHighBits = function () {
                     return this.high;
                 };
@@ -2922,7 +3057,7 @@ function ENCRYPT(e) {
                         return this.equals(r.MIN_VALUE) ? 64 : this.negate().getNumBitsAbs();
                     }
                     for (var e = 0 != this.high ? this.high : this.low, t = 31; 0 < t && 0 == (e & 1 << t); t--) {
-                        ;
+                        // Loop through the bits from the most significant to the least significant
                     }
                     return 0 != this.high ? t + 33 : t + 1;
                 };
@@ -2959,80 +3094,218 @@ function ENCRYPT(e) {
                 r.prototype.greaterThanOrEqual = function (e) {
                     return 0 <= this.compare(e);
                 };
+                // Define comparison operation for Long integers
                 r.prototype.compare = function (e) {
+                    // Return 0 if the two numbers are equal
                     if (this.equals(e)) {
                         return 0;
                     }
-                    var t = this.isNegative(), n = e.isNegative();
-                    return t && !n ? -1 : !t && n ? 1 : this.unsigned ? e.high >>> 0 > this.high >>> 0 || e.high === this.high && e.low >>> 0 > this.low >>> 0 ? -1 : 1 : this.subtract(e).isNegative() ? -1 : 1;
+
+                    // Determine if either number is negative
+                    var t = this.isNegative(),
+                        n = e.isNegative();
+
+                    // Compare numbers based on their signs and values
+                    return t && !n ? -1 : !t && n ? 1 : this.unsigned ?
+                        // Unsigned comparison
+                        e.high >>> 0 > this.high >>> 0 ||
+                            (e.high === this.high && e.low >>> 0 > this.low >>> 0) ? -1 : 1 :
+                        // Signed comparison
+                        this.subtract(e).isNegative() ? -1 : 1;
                 };
+
+                // Define negation operation for Long integers
                 r.prototype.negate = function () {
+                    // Return MIN_VALUE if unsigned and equal to MIN_VALUE, otherwise return negated value
                     return !this.unsigned && this.equals(r.MIN_VALUE) ? r.MIN_VALUE : this.not().add(r.ONE);
                 };
+
+                // Define addition operation for Long integers
                 r.prototype.add = function (e) {
+                    // Convert e to a Long integer if it's not already
                     r.isLong(e) || (e = r.fromValue(e));
-                    var t = this.high >>> 16, n = 65535 & this.high, o = this.low >>> 16, i = 65535 & this.low, s = e.high >>> 16, a = 65535 & e.high, c = e.low >>> 16, l = 0, d = 0, u = 0, h = 0;
-                    return u += (h += i + (65535 & e.low)) >>> 16, d += (u += o + c) >>> 16, l += (d += n + a) >>> 16, l += t + s, r.fromBits((u &= 65535) << 16 | (h &= 65535), (l &= 65535) << 16 | (d &= 65535), this.unsigned);
+
+                    // Extract 16-bit words from both numbers
+                    var t = this.high >>> 16,
+                        n = 65535 & this.high,
+                        o = this.low >>> 16,
+                        i = 65535 & this.low,
+                        s = e.high >>> 16,
+                        a = 65535 & e.high,
+                        c = e.low >>> 16;
+
+                    // Perform addition using 16-bit words
+                    var l = 0,
+                        d = 0,
+                        u = 0,
+                        h = 0;
+                    u += (h += i + (65535 & e.low)) >>> 16;
+                    d += (u += o + c) >>> 16;
+                    l += (d += n + a) >>> 16;
+                    l += t + s;
+
+                    // Create and return a new Long integer from the result
+                    return r.fromBits((u &= 65535) << 16 | (h &= 65535), (l &= 65535) << 16 | (d &= 65535), this.unsigned);
                 };
+
+                // Define subtraction operation for Long integers
                 r.prototype.subtract = function (e) {
+                    // Convert e to a Long integer if it's not already, then subtract it from this
                     return r.isLong(e) || (e = r.fromValue(e)), this.add(e.negate());
                 };
+
+                // Define the multiplication operation for long integers
                 r.prototype.multiply = function (e) {
-                    if (this.isZero()) {
+                    // Return zero if either operand is zero
+                    if (this.isZero() || e.isZero()) {
                         return r.ZERO;
                     }
+
+                    // Convert e to a Long integer if it's not already
                     if (r.isLong(e) || (e = r.fromValue(e)), e.isZero()) {
                         return r.ZERO;
                     }
+
+                    // Handle special case for MIN_VALUE
                     if (this.equals(r.MIN_VALUE)) {
+                        // Return MIN_VALUE if e is odd, otherwise return zero
                         return e.isOdd() ? r.MIN_VALUE : r.ZERO;
                     }
+
+                    // Handle special case for e being MIN_VALUE
                     if (e.equals(r.MIN_VALUE)) {
+                        // Return MIN_VALUE if this is odd, otherwise return zero
                         return this.isOdd() ? r.MIN_VALUE : r.ZERO;
                     }
+
+                    // Handle negative numbers
                     if (this.isNegative()) {
-                        return e.isNegative() ? this.negate().multiply(e.negate()) : this.negate().multiply(e).negate();
+                        if (e.isNegative()) {
+                            // Multiply and negate if both are negative
+                            return this.negate().multiply(e.negate());
+                        } else {
+                            // Negate the result if only the first number is negative
+                            return this.negate().multiply(e).negate();
+                        }
                     }
+
+                    // Handle negative e
                     if (e.isNegative()) {
+                        // Negate the result if only the second number is negative
                         return this.multiply(e.negate()).negate();
                     }
+
+                    // Handle small numbers using regular multiplication
                     if (this.lessThan(d) && e.lessThan(d)) {
                         return r.fromNumber(this.toNumber() * e.toNumber(), this.unsigned);
                     }
-                    var t = this.high >>> 16, n = 65535 & this.high, o = this.low >>> 16, i = 65535 & this.low, s = e.high >>> 16, a = 65535 & e.high, c = e.low >>> 16, l = 65535 & e.low, u = 0, h = 0, f = 0, w = 0;
-                    return f += (w += i * l) >>> 16, h += (f += o * l) >>> 16, f &= 65535, h += (f += i * c) >>> 16, u += (h += n * l) >>> 16, h &= 65535, u += (h += o * c) >>> 16, h &= 65535, u += (h += i * a) >>> 16, u += t * l + n * c + o * a + i * s, r.fromBits((f &= 65535) << 16 | (w &= 65535), (u &= 65535) << 16 | (h &= 65535), this.unsigned);
+
+                    // Extract the high and low 16-bit words from both numbers
+                    var t = this.high >>> 16,
+                        n = 65535 & this.high,
+                        o = this.low >>> 16,
+                        i = 65535 & this.low,
+                        s = e.high >>> 16,
+                        a = 65535 & e.high,
+                        c = e.low >>> 16,
+                        l = 65535 & e.low,
+                        u = 0,
+                        h = 0,
+                        f = 0,
+                        w = 0;
+
+                    // Perform long multiplication using 16-bit words
+                    f += (w += i * l) >>> 16;
+                    h += (f += o * l) >>> 16;
+                    f &= 65535;
+                    h += (f += i * c) >>> 16;
+                    u += (h += n * l) >>> 16;
+                    h &= 65535;
+                    u += (h += o * c) >>> 16;
+                    h &= 65535;
+                    u += (h += i * a) >>> 16;
+                    u += t * l + n * c + o * a + i * s;
+
+                    // Create and return a new Long integer from the result
+                    return r.fromBits((f &= 65535) << 16 | (w &= 65535), (u &= 65535) << 16 | (h &= 65535), this.unsigned);
                 };
+
+                // Define the division operation for long integers
                 r.prototype.div = function (e) {
+                    // Check if e is a long integer; if not, convert it
                     if (r.isLong(e) || (e = r.fromValue(e)), e.isZero()) {
+                        // Throw an error if division by zero
                         throw new Error('division by zero');
                     }
+                    // Check if the dividend is zero
                     if (this.isZero()) {
+                        // Return zero if the dividend is zero
                         return this.unsigned ? r.UZERO : r.ZERO;
                     }
+
                     var t, n, o;
+
+                    // Handle special cases for MIN_VALUE
                     if (this.equals(r.MIN_VALUE)) {
-                        return e.equals(r.ONE) || e.equals(r.NEG_ONE) ? r.MIN_VALUE : e.equals(r.MIN_VALUE) ? r.ONE : (t = this.shiftRight(1).div(e).shiftLeft(1)).equals(r.ZERO) ? e.isNegative() ? r.ONE : r.NEG_ONE : (n = this.subtract(e.multiply(t)), o = t.add(n.div(e)));
+                        if (e.equals(r.ONE) || e.equals(r.NEG_ONE)) {
+                            // Return MIN_VALUE if divisor is 1 or -1
+                            return r.MIN_VALUE;
+                        } else if (e.equals(r.MIN_VALUE)) {
+                            // Return 1 if divisor is MIN_VALUE
+                            return r.ONE;
+                        } else {
+                            // Perform division with shifted values
+                            t = this.shiftRight(1).div(e).shiftLeft(1);
+                            if (t.equals(r.ZERO)) {
+                                // Adjust result for rounding errors
+                                return e.isNegative() ? r.ONE : r.NEG_ONE;
+                            } else {
+                                n = this.subtract(e.multiply(t));
+                                o = t.add(n.div(e));
+                            }
+                        }
                     }
+
+                    // Handle special case for MIN_VALUE
                     if (e.equals(r.MIN_VALUE)) {
+                        // Return zero if divisor is MIN_VALUE
                         return this.unsigned ? r.UZERO : r.ZERO;
                     }
+
+                    // Perform division for positive integers
                     if (this.isNegative()) {
-                        return e.isNegative() ? this.negate().div(e.negate()) : this.negate().div(e).negate();
+                        if (e.isNegative()) {
+                            // Perform division for negative dividend and divisor
+                            return this.negate().div(e.negate());
+                        } else {
+                            // Perform division for negative dividend and positive divisor
+                            return this.negate().div(e).negate();
+                        }
                     }
+
+                    // Perform division for positive dividend and divisor
                     if (e.isNegative()) {
+                        // Perform division for positive dividend and negative divisor
                         return this.div(e.negate()).negate();
                     }
+
+                    // Perform long division algorithm
                     for (o = r.ZERO, n = this; n.greaterThanOrEqual(e);) {
+                        // Calculate the quotient using binary search
                         t = Math.max(1, Math.floor(n.toNumber() / e.toNumber()));
                         for (var i = Math.ceil(Math.log(t) / Math.LN2), s = i <= 48 ? 1 : Math.pow(2, i - 48), a = r.fromNumber(t), c = a.multiply(e); c.isNegative() || c.greaterThan(n);) {
                             c = (a = r.fromNumber(t -= s, this.unsigned)).multiply(e);
                         }
+                        // Ensure quotient is not zero
                         a.isZero() && (a = r.ONE);
+                        // Update quotient and remainder
                         o = o.add(a);
                         n = n.subtract(c);
                     }
+                    // Return the quotient
                     return o;
                 };
+
                 r.prototype.modulo = function (e) {
                     return r.isLong(e) || (e = r.fromValue(e)), this.subtract(this.div(e).multiply(e));
                 };

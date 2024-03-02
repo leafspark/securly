@@ -104,68 +104,95 @@ module.exports = {
     phraseMatchList
 };
 
-
 const identifiedWebsites = [];
 
-
-chrome.tabs.query({
-    active: true,
-    lastFocusedWindow: true
-}, function (e) {
-    updateActive(e[0]);
+// Querying for active tab in the last focused window
+chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
+    updateActive(tabs[0]);
     chrome.tabs.onActivated.addListener(onActivated);
     chrome.tabs.onUpdated.addListener(onUpdated);
 });
-chrome.downloads.onCreated.addListener(function (e) {
-    var t = e.url;
-    if ('text/html' == e.mime) {
-        t.length > 1000 && (t = t.substring(0, 1000));
-        var n = window.btoa(t), o = document.createElement('a');
-        o.href = t;
-        var r = o.hostname.toLowerCase();
-        if ('DENY' == getRespArr(r = normalizeHostname(r), n, '', t)[0]) {
-            return chrome.downloads.cancel(e.id), void chrome.downloads.removeFile(e.id);
+
+// Listening for downloads created event
+chrome.downloads.onCreated.addListener(function (downloadItem) {
+    var url = downloadItem.url;
+    if ('text/html' === downloadItem.mime) {
+        if (url.length > 1000) {
+            url = url.substring(0, 1000);
+        }
+        var encodedUrl = window.btoa(url);
+        var anchor = document.createElement('a');
+        anchor.href = url;
+        var hostname = anchor.hostname.toLowerCase();
+        if ('DENY' === getRespArr(normalizeHostname(hostname), encodedUrl, '', url)[0]) {
+            chrome.downloads.cancel(downloadItem.id);
+            chrome.downloads.removeFile(downloadItem.id);
         }
     }
 });
+
+// Handling messages from content scripts
 var previousMeetUrl = '';
-chrome.runtime.onConnect.addListener(function (e) {
-    'gmeet' == e.name && e.onMessage.addListener(function (e, t) {
-        if (e.url != previousMeetUrl) {
-            previousMeetUrl = e.url;
-            let n = window.btoa(e.url), o = document.createElement('a');
-            o.href = e.url;
-            lHostName = o.hostname.toLowerCase();
-            let r = lHostName;
-            lHostName = normalizeHostname(r);
-            let i = getRespArrTabs(lHostName, n, '', e.url, t.sender.tab.id, '', false, this), s = i[0], a = i[1];
-            'DENY' == s && chrome.tabs.update(t.sender.tab, takeDenyAction(a, 2, n));
-        }
-    });
+chrome.runtime.onConnect.addListener(function (port) {
+    if ('gmeet' === port.name) {
+        port.onMessage.addListener(function (message, sender) {
+            if (message.url !== previousMeetUrl) {
+                previousMeetUrl = message.url;
+                var encodedUrl = window.btoa(message.url);
+                var anchor = document.createElement('a');
+                anchor.href = message.url;
+                var lHostName = anchor.hostname.toLowerCase();
+                lHostName = normalizeHostname(lHostName);
+                var responseArr = getRespArrTabs(lHostName, encodedUrl, '', message.url, sender.tab.id, '', false, this);
+                var response = responseArr[0];
+                var action = responseArr[1];
+                if ('DENY' === response) {
+                    chrome.tabs.update(sender.tab.id, takeDenyAction(action, 2, encodedUrl));
+                }
+            }
+        });
+    }
 });
-chrome.runtime.onMessage.addListener(function (e, t, n) {
-    'proxyIdentified' === e.type && (delete e.type, notifyProxyIdentified(e));
+
+// Listening for messages from content scripts
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    if ('proxyIdentified' === message.type) {
+        delete message.type;
+        notifyProxyIdentified(message);
+    }
 });
-chrome.cookies.onChanged.addListener(function (e) {
-    'explicit' != e.cause || e.removed || 'securly.com' != e.cookie.domain && -1 == e.cookie.domain.indexOf('.securly.com') || cookieMonster(e.cookie);
+
+// Listening for cookie changes
+chrome.cookies.onChanged.addListener(function (changeInfo) {
+    if ('explicit' !== changeInfo.cause || changeInfo.removed || ('securly.com' !== changeInfo.cookie.domain && -1 === changeInfo.cookie.domain.indexOf('.securly.com'))) {
+        return;
+    }
+    cookieMonster(changeInfo.cookie);
 });
+
 class FailedOpen {
-    constructor(e, t) {
+    constructor(mode, duration) {
+        // Constants for different modes
         this.wideOpenMode = 0;
         this.cipaMode = 1;
-        this.mode = e;
-        this.duration = t;
-        void 0 !== this.mode && null != this.mode && -1 != this.mode || (this.mode = 1);
-        void 0 !== this.duration && null != this.duration && -1 != this.duration || (this.duration = 300);
-        this.timeStamp = Math.floor(Date.now() / 1000);
+
+        // Initializing properties with default values or provided values
+        this.mode = mode !== undefined && mode !== null && mode !== -1 ? mode : this.cipaMode;
+        this.duration = duration !== undefined && duration !== null && duration !== -1 ? duration : 300;
+        this.timeStamp = Math.floor(Date.now() / 1000); // Current timestamp in seconds
     }
+
+    // Check if the failed open mode is currently active
     isFailedOpen() {
         return Math.floor(Date.now() / 1000) - this.timeStamp < this.duration;
     }
+
+    // Check if the mode is set to wide open mode
     isWideOpenMode() {
-        return this.mode == this.wideOpenMode;
+        return this.mode === this.wideOpenMode;
     }
 }
+
 window.userStatus = {
     NOTFOUND: -1,
     FOUND: 1
@@ -232,6 +259,7 @@ chrome.cookies.getAll({ domain: 'securly.com' }, function (e) {
         cookieMonster(e);
     });
 });
+// Init
 getVersion();
 getGeolocationStatus();
 setInterval(function () {
