@@ -147,7 +147,9 @@
   "background": {
     "scripts": [
       "conf.js",
-      "securly.min.js"
+      "securly.js",
+      "encrypt.js",
+      "securly.functions.js"
     ],
     "persistent": true
   },
