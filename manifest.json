@@ -95,7 +95,8 @@
         "*://chat.google.com/*"
       ],
       "js": [
-        "content7.js"
+        "content7.js",
+        "content7.functions.js"
       ],
       "run_at": "document_idle",
       "all_frames": true

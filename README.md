@@ -5,6 +5,11 @@ Please note that some files are removed or redacted becuase of copyright concern
 
 ### Securly Chrome Extension Files
 
+#### Before you start
+
+content5.js and content7.js are not included because they appear to be a custom implementation of jQuery, which I will not spend time to reverse engineer because the source code is avaliable at:
+[https://jquery.com/download](https://jquery.com/download/)
+
 #### content.min.js
 - **Purpose**: This script is responsible for monitoring user activity on web pages and sending relevant data to the Securly servers for analysis and filtering.
 - **Components**:

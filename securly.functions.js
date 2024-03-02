@@ -1,3 +1,12 @@
+const {
+    query,
+    chrome,
+    FailedOpen,
+    window,
+    phraseMatchPassPhrase,
+    phraseMatchList
+} = require('./securly');
+
 function putURLCache(response, isSubframe, host, isSecure) {
     if (response.indexOf('WL_URL') === -1 || typeof window.crextnBasegene_bit0 !== 'undefined' && window.crextnBasegene_bit0 === window.bit0) {
         if (isSecure !== 0 || typeof window.crextnBasegene_bit0 !== 'undefined' && window.crextnBasegene_bit0 === window.bit0) {
@@ -2239,36 +2248,26 @@ function getSocialPost(e, t) {
 
     // Check if the request is related to Google+
     if (-1 != t.indexOf('google.co') && -1 != t.indexOf('/PlusAppUi/mutate') && ('POST' == e.method && 'xmlhttprequest' == e.type)) {
-        var s = ''; // Initialize variable for Google+ post content
+        var postContent = ''; // Initialize variable for Google+ post content
 
         // Extract post content from the request body
         if (void 0 !== e.requestBody.raw) {
             o = buff2StrWithEmoji(e.requestBody.raw[0].bytes); // Decode request body bytes
-            s = extractPost(o, 'f.req=%5B%22', '%22%2C%22oz'); // Extract Google+ post content
-            n = window.btoa(decodeURIComponent(s.toLowerCase())); // Base64 encode and lowercase post content
+            postContent = extractPost(o, 'f.req=%5B%22', '%22%2C%22oz'); // Extract Google+ post content
+            n = window.btoa(decodeURIComponent(postContent.toLowerCase())); // Base64 encode and lowercase post content
         } else {
             var a = e.requestBody.formData['f.req'][0]; // Get post content from form data
             if (-1 !== a.indexOf('79255737')) {
-                s = extractPost(a, '[[[0,"', '"]]],null'); // Extract Google+ post content
-                console.log(s); // Log the extracted content
-                s = s.replace('%', '%25'); // Replace special characters in the content
-                n = window.btoa(decodeURIComponent(s.toLowerCase())); // Base64 encode and lowercase post content
+                postContent = extractPost(a, '[[[0,"', '"]]],null'); // Extract Google+ post content
+                console.log(postContent); // Log the extracted content
+                postContent = postContent.replace('%', '%25'); // Replace special characters in the content
+                n = window.btoa(decodeURIComponent(postContent.toLowerCase())); // Base64 encode and lowercase post content
             }
         }
     }
 
     return n; // Return the encoded post content
 }
-
-
-const {
-    query,
-    chrome,
-    FailedOpen,
-    window,
-    phraseMatchPassPhrase,
-    phraseMatchList
-} = require('./securly');
 
 module.exports = {
     findCrextnBasegene,

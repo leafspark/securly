@@ -1,3 +1,9 @@
+const {
+    bindEvents,
+    setCurrentTimeAsTimeout,
+    createSizeObject
+} = require('./content7.functions')
+
 !function (e, t) {
     'use strict';
     'object' == typeof module && 'object' == typeof module.exports ? module.exports = e.document ? t(e, true) : function (e) {
@@ -826,13 +832,13 @@
             }
             return a;
         }
-        function Te(selector, filters, preCallback, removalCallback, addCallback, context) {
+        function manageElementCallbacks(selector, filters, preCallback, removalCallback, addCallback, context) {
             // Normalize callback functions
             if (removalCallback && !removalCallback.isNormalized) {
-                removalCallback = Te(removalCallback);
+                removalCallback = manageElementCallbacks(removalCallback);
             }
             if (addCallback && !addCallback.isNormalized) {
-                addCallback = Te(addCallback, context);
+                addCallback = manageElementCallbacks(addCallback, context);
             }
 
             // Main logic wrapped in a closure
@@ -912,7 +918,7 @@
                         for (i = ++u; i < o && !r.relative[e[i].type]; i++) {
                             ;
                         }
-                        return Te(u > 1 && we(p), u > 1 && xe(e.slice(0, u - 1).concat({ value: ' ' === e[u - 2].type ? '*' : '' })).replace($, '$1'), n, u < i && Se(e.slice(u, i)), i < o && Se(e = e.slice(i)), i < o && xe(e));
+                        return manageElementCallbacks(u > 1 && we(p), u > 1 && xe(e.slice(0, u - 1).concat({ value: ' ' === e[u - 2].type ? '*' : '' })).replace($, '$1'), n, u < i && Se(e.slice(u, i)), i < o && Se(e = e.slice(i)), i < o && xe(e));
                     }
                     p.push(n);
                 }
@@ -1221,71 +1227,139 @@
             n.apply(void 0, [e]);
         }
     }
-    utils0.Callbacks = function (e) {
-        e = 'string' == typeof e ? function (e) {
-            var t = { n: true };
-            return utils0.each(e.match(/[^\x20\t\r\n\f]+/g) || [], function (e, n) {
-                ;
-            }), t;
-        }(e) : utils0.extend({}, e);
-        var t, n, r, i, o = [], a = [], s = -1, u = function () {
-            for (i = i || e.once, r = t = true; a.length; s = -1) {
-                for (n = a.shift(); ++s < o.length;) {
-                    false === o[s].apply(n[0], n[1]) && e.stopOnFalse && (s = o.length, n = false);
+    utils0.Callbacks = function (options) {
+        var callbacks = [],
+            memory,
+            fired,
+            locked,
+            firingIndex = -1;
+
+        if (typeof options === 'string') {
+            options = (function (opts) {
+                var parsed = {};
+                opts.match(/[^\x20\t\r\n\f]+/g) || [].forEach(function (val) {
+                    parsed[val] = true;
+                });
+                return parsed;
+            })(options);
+        } else {
+            options = utils0.extend({}, options);
+        }
+
+        var fireCallbacks = function () {
+            memory = options.once;
+            fired = true;
+            locked = true;
+
+            for (; callbacks.length;) {
+                var args = callbacks.shift();
+                firingIndex = -1;
+                while (++firingIndex < callbacks.length) {
+                    if (false === callbacks[firingIndex].apply(args[0], args[1]) && options.stopOnFalse) {
+                        firingIndex = callbacks.length;
+                        args = false;
+                    }
                 }
             }
-            e.memory || (n = false);
-            t = false;
-            i && (o = n ? [] : '');
-        }, l = {
-            add: function () {
-                return o && (n && !t && (s = o.length - 1, a.push(n)), function t(n) {
-                    utils0.each(n, function (n, r) {
-                        h(r) ? e.unique && l.has(r) || o.push(r) : r && r.length && 'string' !== x(r) && t(r);
-                    });
-                }(arguments), n && !t && u()), this;
-            },
-            remove: function () {
-                return utils0.each(arguments, function (e, t) {
-                    for (var n; (n = utils0.inArray(t, o, n)) > -1;) {
-                        o.splice(n, 1);
-                        n <= s && s--;
-                    }
-                }), this;
-            },
-            has: function (e) {
-                return e ? utils0.inArray(e, o) > -1 : o.length > 0;
-            },
-            empty: function () {
-                return o && (o = []), this;
-            },
-            disable: function () {
-                return i = a = [], o = n = '', this;
-            },
-            disabled: function () {
-                return !o;
-            },
-            lock: function () {
-                return i = a = [], n || t || (o = n = ''), this;
-            },
-            locked: function () {
-                return !!i;
-            },
-            fireWith: function (e, n) {
-                return i || (n = [
-                    e,
-                    (n = n || []).slice ? n.slice() : n
-                ], a.push(n), t || u()), this;
-            },
-            fire: function () {
-                return l.fireWith(this, arguments), this;
-            },
-            fired: function () {
-                return !!r;
+
+            if (!options.memory) {
+                args = false;
+            }
+            locked = false;
+
+            if (memory) {
+                callbacks = args ? [] : '';
             }
         };
-        return l;
+
+        var api = {
+            add: function () {
+                if (callbacks) {
+                    if (arguments.length) {
+                        if (!locked) {
+                            fireCallbacks();
+                        }
+
+                        (function add(args) {
+                            args.forEach(function (arg) {
+                                if (typeof arg === 'function') {
+                                    if (options.unique && !api.has(arg)) {
+                                        callbacks.push(arg);
+                                    }
+                                } else if (arg && arg.length && typeof arg !== 'string') {
+                                    add(arg);
+                                }
+                            });
+                        })(Array.from(arguments));
+
+                        if (!locked) {
+                            fireCallbacks();
+                        }
+                    }
+                }
+                return this;
+            },
+            remove: function () {
+                if (callbacks) {
+                    Array.from(arguments).forEach(function (arg) {
+                        var index;
+                        while ((index = callbacks.indexOf(arg, index)) > -1) {
+                            callbacks.splice(index, 1);
+                            if (index <= firingIndex) {
+                                firingIndex--;
+                            }
+                        }
+                    });
+                }
+                return this;
+            },
+            has: function (fn) {
+                return fn ? callbacks.includes(fn) : callbacks.length > 0;
+            },
+            empty: function () {
+                if (callbacks) {
+                    callbacks = [];
+                }
+                return this;
+            },
+            disable: function () {
+                memory = locked = callbacks = '';
+                return this;
+            },
+            disabled: function () {
+                return !callbacks;
+            },
+            lock: function () {
+                locked = true;
+                if (!memory) {
+                    api.disable();
+                }
+                return this;
+            },
+            locked: function () {
+                return !!locked;
+            },
+            fireWith: function (context, args) {
+                if (!locked) {
+                    args = [context, args ? args.slice() : []];
+                    callbacks.push(args);
+                    if (!fired) {
+                        fireCallbacks();
+                    }
+                }
+                return this;
+            },
+            fire: function () {
+                return api.fireWith(this, arguments);
+            },
+            fired: function () {
+                return !!fired;
+            }
+        };
+
+        return api;
     };
+
     utils0.extend({
         Deferred: function (t) {
             var n = [
@@ -1428,22 +1502,46 @@
     });
     utils0.ready.then = B.then;
     'complete' === y.readyState || 'loading' !== y.readyState && !y.documentElement.doScroll ? e.setTimeout(utils0.ready) : (y.addEventListener('DOMContentLoaded', W), e.addEventListener('load', W));
-    var F = function (e, t, n, r, i, o, a) {
-        var s = 0, u = e.length, l = null == n;
-        if ('object' === x(n)) {
-            for (s in (i = true, n))
-                F(e, t, s, n[s], true, o, a);
+    var F = function (elems, callback, key, value, iterate, context) {
+        var length = elems.length,
+            index = 0,
+            isObject = typeof key === 'object',
+            needsContext = !context;
+
+        if (isObject) {
+            for (index in key) {
+                F(elems, callback, index, key[index], true, value);
+            }
         } else {
-            if (void 0 !== r && (i = true, h(r) || (a = true), l && (a ? (t.call(e, r), t = null) : (l = t, t = function (e, t, n) {
-                return l.call(utils0(e), n);
-            })), t)) {
-                for (; s < u; s++) {
-                    t(e[s], n, a ? r : r.call(e[s], s, t(e[s], n)));
+            if (value !== undefined) {
+                iterate = true;
+                if (!utils0.isFunction(value)) {
+                    context = true;
+                }
+
+                if (needsContext) {
+                    if (context) {
+                        callback.call(elems, value);
+                        callback = null;
+                    } else {
+                        needsContext = callback;
+                        callback = function (elem, key, value) {
+                            return needsContext.call(utils0(elem), value);
+                        };
+                    }
+                }
+
+                if (callback) {
+                    for (; index < length; index++) {
+                        callback(elems[index], key, context ? value : value.call(elems[index], index, callback(elems[index], key)));
+                    }
                 }
             }
         }
-        return i ? e : l ? t.call(e) : u ? t(e[0], n) : o;
+
+        return iterate ? elems : needsContext ? callback.call(elems) : length ? callback(elems[0], key) : context;
     };
+
     function G(e, t) {
         return t.toUpperCase();
     }
@@ -1564,33 +1662,57 @@
         }
     });
     utils0.extend({
-        queue: function (e, t, n) {
-            var r;
-            if (e) {
-                return t = (t || 'fx') + 'queue', r = X.get(e, t), n && (!r || Array.isArray(n) ? r = X.access(e, t, utils0.makeArray(n)) : r.push(n)), r || [];
+        queue: function (element, queueName, data) {
+            var queue;
+            if (element) {
+                queueName = (queueName || 'fx') + 'queue';
+                queue = X.get(element, queueName);
+                if (data) {
+                    if (!queue || Array.isArray(data)) {
+                        queue = X.access(element, queueName, utils0.makeArray(data));
+                    } else {
+                        queue.push(data);
+                    }
+                }
+                return queue || [];
             }
         },
-        dequeue: function (e, t) {
-            t = t || 'fx';
-            var n = utils0.queue(e, t), r = n.length, i = n.shift(), o = utils0._queueHooks(e, t);
-            'inprogress' === i && (i = n.shift(), r--);
-            i && ('fx' === t && n.unshift('inprogress'), delete o.stop, i.call(e, function () {
-                utils0.dequeue(e, t);
-            }, o));
-            !r && o && o.empty.fire();
+        dequeue: function (element, queueName) {
+            queueName = queueName || 'fx';
+            var queue = utils0.queue(element, queueName),
+                length = queue.length,
+                next = queue.shift(),
+                hooks = utils0._queueHooks(element, queueName);
+
+            if (next === 'inprogress') {
+                next = queue.shift();
+                length--;
+            }
+
+            if (next) {
+                if (queueName === 'fx' && queue[0] !== 'inprogress') {
+                    queue.unshift('inprogress');
+                }
+                delete hooks.stop;
+                next.call(element, function () {
+                    utils0.dequeue(element, queueName);
+                }, hooks);
+            }
+
+            if (!length && hooks) {
+                hooks.empty.fire();
+            }
         },
-        _queueHooks: function (e, t) {
-            var n = t + 'queueHooks';
-            return X.get(e, n) || X.access(e, n, {
+        _queueHooks: function (element, queueName) {
+            var hooksKey = queueName + 'queueHooks';
+            return X.get(element, hooksKey) || X.access(element, hooksKey, {
                 empty: utils0.Callbacks('once memory').add(function () {
-                    X.remove(e, [
-                        t + 'queue',
-                        n
-                    ]);
+                    X.remove(element, [queueName + 'queue', hooksKey]);
                 })
             });
         }
     });
+
     utils0.fn.extend({
         queue: function (queueName, callback) {
             var minArgsCount = 2;
@@ -1847,48 +1969,7 @@
             }
         }() == ('focus' === t);
     }
-    function bindEvents(element, eventType, selector, data, handler, one) {
-        var eventTypeType = typeof eventType;
-        if (eventTypeType === 'object') {
-            for (var key in eventType) {
-                bindEvents(element, key, data, handler, eventType[key], one);
-            }
-            return element;
-        }
 
-        if (data == null && handler == null) {
-            handler = selector;
-            data = selector = undefined;
-        } else if (handler == null) {
-            if (typeof selector === 'string') {
-                handler = data;
-                data = undefined;
-            } else {
-                handler = data;
-                data = selector;
-                selector = undefined;
-            }
-        }
-
-        if (handler === false) {
-            handler = returnFalse;
-        } else if (!handler) {
-            return element;
-        }
-
-        if (one === 1) {
-            var originalHandler = handler;
-            handler = function (event) {
-                utils0(this).off(event);
-                return originalHandler.apply(this, arguments);
-            };
-            handler.guid = originalHandler.guid || (originalHandler.guid = utils0.guid++);
-        }
-
-        return element.each(function () {
-            utils0.event.add(this, eventType, handler, data, selector);
-        });
-    }
 
     function bindEventHandler(element, eventType, handlerFunction) {
         if (handlerFunction) {
@@ -2570,14 +2651,64 @@
             zoom: true
         },
         cssProps: {},
-        style: function (e, t, n, r) {
-            if (e && 3 !== e.nodeType && 8 !== e.nodeType && e.style) {
-                var i, o, a, s = z(t), u = /^--/.test(t), l = e.style;
-                if (u || (t = Ge(s)), a = utils0.cssHooks[t] || utils0.cssHooks[s], void 0 === n) {
-                    return a && 'get' in a && void 0 !== (i = a.get(e, false, r)) ? i : l[t];
+        // Define function 'style' to manipulate styles of an element
+        style: function (element, styleName, value, extra) {
+            // Skip text and comment nodes and check if element has style property
+            if (element && element.nodeType !== 3 && element.nodeType !== 8 && element.style) {
+                var match, typeOfValue, hook, camelStyleName = z(styleName),
+                    isCustomProp = /^--/.test(styleName),
+                    style = element.style;
+
+                // Convert style name to proper format unless it's a custom CSS property
+                if (!isCustomProp) {
+                    styleName = Ge(camelStyleName);
                 }
-                'string' === (o = typeof n) && (i = ee.exec(n)) && i[1] && (n = animatePropertyValue(e, t, i), o = 'number');
-                null != n && n == n && ('number' !== o || u || (n += i && i[3] || (utils0.cssNumber[s] ? '' : 'px')), d.clearCloneStyle || '' !== n || 0 !== t.indexOf('background') || (l[t] = 'inherit'), a && 'set' in a && void 0 === (n = a.set(e, n, r)) || (u ? l.setProperty(t, n) : l[t] = n));
+
+                // Get the appropriate hook if one exists
+                hook = utils0.cssHooks[styleName] || utils0.cssHooks[camelStyleName];
+
+                // If no value is provided, return the current style value
+                if (value === undefined) {
+                    if (hook && 'get' in hook && (match = hook.get(element, false, extra)) !== undefined) {
+                        return match;
+                    }
+                    return style[styleName];
+                }
+
+                // Determine the type of the provided value
+                typeOfValue = typeof value;
+
+                // Handle string values and animation property values
+                if (typeOfValue === 'string' && (match = ee.exec(value)) && match[1]) {
+                    value = animatePropertyValue(element, styleName, match);
+                    typeOfValue = 'number';
+                }
+
+                // Only process non-null and non-NaN values
+                if (value != null && value === value) {
+                    // If value is a number and not a custom property, potentially add units (px)
+                    if (typeOfValue !== 'number' || isCustomProp) {
+                        if (!isCustomProp) {
+                            value += match && match[3] || (utils0.cssNumber[camelStyleName] ? '' : 'px');
+                        }
+                    }
+
+                    // Avoid setting a style if it's not needed
+                    if (!d.clearCloneStyle && value === '' && styleName.indexOf('background') === 0) {
+                        style[styleName] = 'inherit';
+                    }
+
+                    // Use the hook's set method if available
+                    if (hook && 'set' in hook && (value = hook.set(element, value, extra)) === undefined) {
+                        if (isCustomProp) {
+                            // Set custom property
+                            style.setProperty(styleName, value);
+                        } else {
+                            // Set regular property
+                            style[styleName] = value;
+                        }
+                    }
+                }
             }
         },
         css: function (e, t, n, r) {
@@ -2692,37 +2823,7 @@
     function rt() {
         et && (false === y.hidden && e.requestAnimationFrame ? e.requestAnimationFrame(rt) : e.setTimeout(rt, utils0.fx.interval), utils0.fx.tick());
     }
-    function setCurrentTimeAsTimeout() {
-        // Clear the previous timeout if any
-        clearTimeout(previousTimeout);
-        // Set a new timeout to reset a global variable 'lastTime'
-        previousTimeout = setTimeout(function () {
-            lastTime = undefined;
-        });
-        // Return the current time in milliseconds
-        return lastTime = Date.now();
-    }
 
-    function createSizeObject(size, includeOpacityAndWidth) {
-        var sizeProperties = { height: size },
-            propertySuffix,
-            sideIndex = 0,
-            sides = ['Top', 'Right', 'Bottom', 'Left'];
-
-        // Loop to set padding and margin for all four sides
-        for (; sideIndex < 4; sideIndex += 2 - includeOpacityAndWidth ? 1 : 0) {
-            propertySuffix = sides[sideIndex];
-            // Set both margin and padding for each side
-            sizeProperties['margin' + propertySuffix] = sizeProperties['padding' + propertySuffix] = size;
-        }
-
-        // If includeOpacityAndWidth flag is true, set opacity and width as well
-        if (includeOpacityAndWidth) {
-            sizeProperties.opacity = sizeProperties.width = size;
-        }
-
-        return sizeProperties;
-    }
 
     function applyCustomTweener(properties, tweenType, context) {
         var tweenerFunction,
@@ -4483,3 +4584,7 @@ let userEmail = '';
     });
     window.addEventListener ? window.addEventListener('load', i, false) : window.attachEvent && window.attachEvent('onload', i);
 }(jqGCSecurly);
+
+module.exports = {
+    utils0
+};
