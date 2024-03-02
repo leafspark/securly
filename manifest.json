@@ -27,7 +27,7 @@
         "*://*.youtube-nocookie.com/*"
       ],
       "js": [
-        "content.min.js"
+        "content.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
@@ -38,7 +38,7 @@
         "*://google.com/maps/*"
       ],
       "js": [
-        "content2.min.js"
+        "content2.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
@@ -65,7 +65,7 @@
         "*://www.google.co.in/search*"
       ],
       "js": [
-        "content3.min.js"
+        "content3.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
@@ -75,7 +75,7 @@
         "*://meet.google.com/*"
       ],
       "js": [
-        "content6.min.js"
+        "content6.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
@@ -85,7 +85,7 @@
         "<all_urls>"
       ],
       "js": [
-        "content4.min.js"
+        "content4.js"
       ],
       "run_at": "document_idle",
       "all_frames": false
@@ -95,7 +95,7 @@
         "*://chat.google.com/*"
       ],
       "js": [
-        "content7.min.js"
+        "content7.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
@@ -108,7 +108,7 @@
         "https://www.google.*/*"
       ],
       "js": [
-        "content8.min.js"
+        "content8.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
@@ -118,7 +118,7 @@
         "<all_urls>"
       ],
       "js": [
-        "content9.min.js"
+        "content9.js"
       ],
       "run_at": "document_start",
       "all_frames": true
@@ -128,7 +128,7 @@
         "<all_urls>"
       ],
       "js": [
-        "content10.min.js"
+        "content10.js"
       ],
       "run_at": "document_start",
       "all_frames": true
@@ -138,7 +138,7 @@
         "<all_urls>"
       ],
       "js": [
-        "content5.min.js"
+        "content5.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
