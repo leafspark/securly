@@ -1,5 +1,7 @@
 ## **Securly Extension Analysis**
 
+![Securly Logo](https://raw.githubusercontent.com/LeafSpark/securly/main/securly-logo.svg)
+
 ### **Introduction**
 
 The Securly Chrome extension is a web filtering and tracking tool designed to monitor student activity online. This analysis provides a deep dive into the extension's components and its functionality.
@@ -83,3 +85,6 @@ The Securly Chrome extension is a web filtering and tracking tool designed to mo
   - Initiates the process of fetching and analyzing web page content
 - **sendData():**
   - Sends fetched and analyzed content to Securly servers for filtering
+
+# Made by
+![leafspark-logo](https://github.com/LeafSpark/securly/assets/78000825/1c72d27d-308f-47f0-9ff5-fa12755460c2)
