@@ -1,71 +1,85 @@
-# securly
-Reverse engineering the Securly extension, a web filtering and tracking extension designed for Chrome to monitor students.
+## **Securly Extension Analysis**
 
-Please note that some files are removed or redacted becuase of copyright concerns.
+### **Introduction**
 
-### Securly Chrome Extension Files
+The Securly Chrome extension is a web filtering and tracking tool designed to monitor student activity online. This analysis provides a deep dive into the extension's components and its functionality.
 
-#### Before you start
+### **Files Reviewed**
 
-content5.js and content7.js are not included because they appear to be a custom implementation of jQuery, which I will not spend time to reverse engineer because the source code is avaliable at:
-[https://jquery.com/download](https://jquery.com/download/)
+- content2.min.js
+- content4.min.js
+- content6.min.js
+- content8.min.js
+- content10.min.js
 
-#### content.min.js
-- **Purpose**: This script is responsible for monitoring user activity on web pages and sending relevant data to the Securly servers for analysis and filtering.
-- **Components**:
-  - `onWindowLoad()`: Function executed when the window loads, initiates monitoring of user activity.
-  - `fetchPageInfo()`: Extracts information about the current web page, such as video ID and channel ID.
-  - `sendData()`: Sends data about the current web page to the Securly servers.
-- **Usage**:
-  - Monitors user interactions on YouTube pages.
-  - Extracts video and channel IDs for tracking purposes.
-  - Sends data to the Securly servers for analysis and filtering.
+**Note:** content5.js and content7.js were excluded due to their reliance on jQuery, which is available open-source.
 
-#### content2.min.js
-- **Purpose**: Handles interactions with Google search pages to enforce safe search settings and monitor search queries.
-- **Components**:
-  - `onWindowLoad()`: Function executed when the window loads, initiates monitoring of search queries and safe search settings.
-  - `fetchPageInfo()`: Extracts information about the current search query and search results.
-  - `sendData()`: Sends search query data to the Securly servers for analysis and filtering.
-- **Usage**:
-  - Monitors search queries and search results on Google search pages.
-  - Enforces safe search settings to filter out explicit content.
-  - Sends search query data to the Securly servers for analysis and filtering.
+### **Content Overview**
 
-#### content4.min.js
-- **Purpose**: Handles interactions with web pages to display and manage a widget overlay for specific content.
-- **Components**:
-  - Widget Styling: Defines CSS styles for the widget overlay.
-  - Widget Display: Dynamically generates and displays the widget overlay on compatible web pages.
-  - Event Handling: Listens for user interactions with the widget overlay, such as clicks on links or close buttons.
-- **Usage**:
-  - Displays a widget overlay on compatible web pages.
-  - Provides additional information or functionality related to the content on the page.
-  - Sends user interactions with the widget overlay to the Securly servers for analysis.
+**content2.min.js**
 
-#### content6.min.js
-- **Purpose**: Connects to the Securly servers to fetch Google Meet URLs from the current web page.
-- **Components**:
-  - `onWindowLoad()`: Function executed when the window loads, initiates the process of fetching Google Meet URLs.
-  - `sendData()`: Sends fetched Google Meet URLs to the Securly servers for analysis.
-- **Usage**:
-  - Fetches Google Meet URLs from the current web page.
-  - Sends fetched URLs to the Securly servers for analysis and filtering.
+- Monitors search queries and Google search pages
+- Enforces safe search settings
+- Sends search query data to Securly servers
 
-#### content8.min.js
-- **Purpose**: Blocks access to Google Games and Facebook content on search result pages and Facebook pages.
-- **Components**:
-  - `blockGoogleGames()`: Blocks access to Google Games content on search result pages.
-  - `hideFacebookContent()`: Hides Facebook content on Facebook pages.
-- **Usage**:
-  - Blocks access to specific types of content on Google search result pages.
-  - Hides Facebook content on Facebook pages.
+**content4.min.js**
 
-#### content10.min.js
-- **Purpose**: Connects to the Securly servers to fetch and analyze content from web pages for filtering purposes.
-- **Components**:
-  - `onWindowLoad()`: Function executed when the window loads, initiates the process of fetching and analyzing web page content.
-  - `sendData()`: Sends fetched and analyzed content to the Securly servers for filtering.
-- **Usage**:
-  - Fetches and analyzes web page content for filtering purposes.
-  - Sends analyzed content to the Securly servers for filtering and blocking.
+- Displays and manages a widget overlay on certain web pages
+- Provides additional information or functionality related to the page content
+- Sends user interactions with the widget to Securly servers
+
+**content6.min.js**
+
+- Fetches Google Meet URLs from the current web page
+- Sends fetched URLs to Securly servers for analysis
+
+**content8.min.js**
+
+- Blocks access to Google Games content on search result pages
+- Hides Facebook content on Facebook pages
+
+**content10.min.js**
+
+- Fetches and analyzes web page content for filtering purposes
+- Sends analyzed content to Securly servers for filtering and blocking
+
+### **Detailed Functionality**
+
+**content2.min.js**
+
+- **onWindowLoad():**
+  - Initiates monitoring of search queries and safe search settings
+- **fetchPageInfo():**
+  - Extracts information about the current search query and search results
+- **sendData():**
+  - Sends search query data to Securly servers for analysis and filtering
+
+**content4.min.js**
+
+- **Widget Styling:**
+  - Defines CSS styles for the widget overlay
+- **Widget Display:**
+  - Generates and displays the widget overlay on compatible web pages
+- **Event Handling:**
+  - Listens for user interactions with the widget overlay, such as clicks on links or close buttons
+
+**content6.min.js**
+
+- **onWindowLoad():**
+  - Initiates the process of fetching Google Meet URLs
+- **sendData():**
+  - Sends fetched Google Meet URLs to Securly servers for analysis
+
+**content8.min.js**
+
+- **blockGoogleGames():**
+  - Blocks access to Google Games content on search result pages
+- **hideFacebookContent():**
+  - Hides Facebook content on Facebook pages
+
+**content10.min.js**
+
+- **onWindowLoad():**
+  - Initiates the process of fetching and analyzing web page content
+- **sendData():**
+  - Sends fetched and analyzed content to Securly servers for filtering
