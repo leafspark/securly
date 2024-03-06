@@ -2947,33 +2947,21 @@ function ENCRYPT(e) {
                 r.fromBits = function (e, t, n) {
                     return new r(e, t, n);
                 };
-                r.fromString = function (e, t, n) {
-                    if (0 === e.length) {
-                        throw Error('number format error: empty string');
+                r.fromString = function (e, radix = 10) {
+                    if (e.length === 0) throw Error('number format error: empty string');
+                    if (['NaN', 'Infinity', '+Infinity', '-Infinity'].includes(e)) return r.ZERO;
+                    if (radix < 2 || radix > 36) throw Error('radix out of range: ' + radix);
+                    if (e.indexOf('-') > 0) throw Error('number format error: interior "-" character: ' + e);
+                    if (e[0] === '-') return r.fromString(e.substring(1), radix).negate();
+
+                    let baseMultiplier = r.fromNumber(Math.pow(radix, 8)), result = r.ZERO;
+                    for (let i = 0; i < e.length; i += 8) {
+                        const length = Math.min(8, e.length - i), value = parseInt(e.substring(i, i + length), radix);
+                        result = length < 8 ? result.multiply(r.fromNumber(Math.pow(radix, length))).add(r.fromNumber(value))
+                            : result.multiply(baseMultiplier).add(r.fromNumber(value));
                     }
-                    if ('NaN' === e || 'Infinity' === e || '+Infinity' === e || '-Infinity' === e) {
-                        return r.ZERO;
-                    }
-                    if ('number' == typeof t && (n = t, t = false), (n = n || 10) < 2 || 36 < n) {
-                        throw Error('radix out of range: ' + n);
-                    }
-                    var o;
-                    if (0 < (o = e.indexOf('-'))) {
-                        throw Error('number format error: interior "-" character: ' + e);
-                    }
-                    if (0 === o) {
-                        return r.fromString(e.substring(1), t, n).negate();
-                    }
-                    for (var i = r.fromNumber(Math.pow(n, 8)), s = r.ZERO, a = 0; a < e.length; a += 8) {
-                        var c = Math.min(8, e.length - a), l = parseInt(e.substring(a, a + c), n);
-                        if (c < 8) {
-                            var d = r.fromNumber(Math.pow(n, c));
-                            s = s.multiply(d).add(r.fromNumber(l));
-                        } else {
-                            s = (s = s.multiply(i)).add(r.fromNumber(l));
-                        }
-                    }
-                    return s.unsigned = t, s;
+                    result.unsigned = !!radix;
+                    return result;
                 };
                 r.fromValue = function (e) {
                     return 'number' == typeof e ? r.fromNumber(e) : 'string' == typeof e ? r.fromString(e) : r.isLong(e) ? e : new r(e.low, e.high, e.unsigned);

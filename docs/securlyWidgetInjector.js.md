@@ -1,4 +1,4 @@
-# File: content4.min.js
+# File securlyWidgetInjector.js
 
 ## Description
 This JavaScript file appears to be part of a Chrome extension or browser script designed to handle a widget related to a certain functionality. It listens for messages from the Chrome runtime and displays or removes the widget based on the received message. It also contains functions to handle clicks on the widget elements.

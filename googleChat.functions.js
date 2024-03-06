@@ -1,6 +1,6 @@
 const {
     utils0
-} = require('./content7');
+} = require('./googleChat');
 
 function bindEvents(element, eventType, selector, data, handler, one) {
     var eventTypeType = typeof eventType;

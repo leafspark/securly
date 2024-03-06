@@ -27,7 +27,7 @@
         "*://*.youtube-nocookie.com/*"
       ],
       "js": [
-        "content.js"
+        "youtube.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
@@ -38,7 +38,7 @@
         "*://google.com/maps/*"
       ],
       "js": [
-        "content2.js"
+        "googleMaps.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
@@ -65,7 +65,7 @@
         "*://www.google.co.in/search*"
       ],
       "js": [
-        "content3.js"
+        "googleSearch.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
@@ -75,7 +75,7 @@
         "*://meet.google.com/*"
       ],
       "js": [
-        "content6.js"
+        "googleMeet.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
@@ -85,7 +85,7 @@
         "<all_urls>"
       ],
       "js": [
-        "content4.js"
+        "securlyWidgetInjector.js"
       ],
       "run_at": "document_idle",
       "all_frames": false
@@ -109,7 +109,7 @@
         "https://www.google.*/*"
       ],
       "js": [
-        "content8.js"
+        "google.js"
       ],
       "run_at": "document_idle",
       "all_frames": true
@@ -119,7 +119,7 @@
         "<all_urls>"
       ],
       "js": [
-        "content9.js"
+        "secureFetch.js"
       ],
       "run_at": "document_start",
       "all_frames": true
@@ -129,7 +129,7 @@
         "<all_urls>"
       ],
       "js": [
-        "content10.js"
+        "proxyDetection.js"
       ],
       "run_at": "document_start",
       "all_frames": true
@@ -139,7 +139,7 @@
         "<all_urls>"
       ],
       "js": [
-        "content5.js"
+        "jQuerySecurly.js"
       ],
       "run_at": "document_idle",
       "all_frames": true

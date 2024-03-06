@@ -2,7 +2,7 @@ const {
     bindEvents,
     setCurrentTimeAsTimeout,
     createSizeObject
-} = require('./content7.functions')
+} = require('./googleChat.functions')
 
 !function (e, t) {
     'use strict';

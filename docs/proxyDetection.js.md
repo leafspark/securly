@@ -1,4 +1,4 @@
-# File: content10.min.js
+# File: proxyDetection.js
 
 ## Description
 This JavaScript file is likely part of a Chrome extension or browser script designed to detect proxies. It contains functions and event listeners to identify proxies based on specific conditions and content on web pages.
